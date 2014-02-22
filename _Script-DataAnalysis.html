@@ -1,0 +1,256 @@
+<html>
+
+<head>
+<style type="text/css">
+.knitr.inline {
+  background-color: #f7f7f7;
+  border:solid 1px #B0B0B0;
+}
+.error {
+	font-weight: bold;
+	color: #FF0000;
+},
+.warning {
+	font-weight: bold;
+}
+.message {
+	font-style: italic;
+}
+.source, .output, .warning, .error, .message {
+	padding: 0em 1em;
+  border:solid 1px #F7F7F7;
+}
+.source {
+  background-color: #f5f5f5;
+}
+.rimage.left {
+  text-align: left;
+}
+.rimage.right {
+  text-align: right;
+}
+.rimage.center {
+  text-align: center;
+}
+.hl.num {
+  color: #AF0F91;
+}
+.hl.str {
+  color: #317ECC;
+}
+.hl.com {
+  color: #AD95AF;
+  font-style: italic;
+}
+.hl.opt {
+  color: #000000;
+}
+.hl.std {
+  color: #585858;
+}
+.hl.kwa {
+  color: #295F94;
+  font-weight: bold;
+}
+.hl.kwb {
+  color: #B05A65;
+}
+.hl.kwc {
+  color: #55aa55;
+}
+.hl.kwd {
+  color: #BC5A65;
+  font-weight: bold;
+}
+</style>
+<title>Divvy Challenge Notes</title>
+</head>
+
+<body>
+
+<p>Code and notes for visualizing Divvy data <a href='http://divvybikes.com/datachallenge'> at this website</a></p>
+
+<p>Need some basic functions to ease data input</p>
+<div class="chunk" id="Functions for support"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">library</span><span class="hl std">(ggplot2)</span>
+<span class="hl kwd">library</span><span class="hl std">(plyr)</span>
+<span class="hl kwd">library</span><span class="hl std">(RColorBrewer)</span>
+<span class="hl std">makeLatLong</span> <span class="hl kwb">&lt;-</span> <span class="hl kwa">function</span><span class="hl std">(</span><span class="hl kwc">dir</span><span class="hl std">,</span> <span class="hl kwc">fi</span><span class="hl std">) {</span>
+    <span class="hl kwd">require</span><span class="hl std">(rgdal)</span>
+    <span class="hl kwd">require</span><span class="hl std">(sp)</span>
+    <span class="hl std">layer</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">readOGR</span><span class="hl std">(dir,</span> <span class="hl kwc">layer</span> <span class="hl std">= fi)</span>
+    <span class="hl std">layer</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">spTransform</span><span class="hl std">(layer,</span> <span class="hl kwd">CRS</span><span class="hl std">(</span><span class="hl str">&quot;+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0&quot;</span><span class="hl std">))</span>
+    <span class="hl kwd">return</span><span class="hl std">(layer)</span>
+<span class="hl std">}</span>
+</pre></div>
+</div></div>
+
+
+##32
+<p>Reading in data and starting up libraries
+<div class="chunk" id="Read In CSV"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl std">stations</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">read.csv</span><span class="hl std">(</span><span class="hl str">&quot;Divvy_Stations_2013.csv&quot;</span><span class="hl std">,</span> <span class="hl kwc">header</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">stringsAsFactors</span> <span class="hl std">=</span> <span class="hl num">FALSE</span><span class="hl std">)</span>
+<span class="hl std">trips</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">read.csv</span><span class="hl std">(</span><span class="hl str">&quot;Divvy_Trips_2013.csv&quot;</span><span class="hl std">,</span> <span class="hl kwc">header</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">stringsAsFactors</span> <span class="hl std">=</span> <span class="hl num">FALSE</span><span class="hl std">)</span>
+
+<span class="hl std">trips</span><span class="hl opt">$</span><span class="hl std">starttime</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">as.POSIXct</span><span class="hl std">(</span><span class="hl kwd">strptime</span><span class="hl std">(trips</span><span class="hl opt">$</span><span class="hl std">starttime,</span> <span class="hl kwc">format</span> <span class="hl std">=</span> <span class="hl str">&quot;%Y-%m-%d %H:%M&quot;</span><span class="hl std">))</span>
+<span class="hl std">trips</span><span class="hl opt">$</span><span class="hl std">stoptime</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">as.POSIXct</span><span class="hl std">(</span><span class="hl kwd">strptime</span><span class="hl std">(trips</span><span class="hl opt">$</span><span class="hl std">stoptime,</span> <span class="hl kwc">format</span> <span class="hl std">=</span> <span class="hl str">&quot;%Y-%m-%d %H:%M&quot;</span><span class="hl std">))</span>
+<span class="hl std">trips</span><span class="hl opt">$</span><span class="hl std">age</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">as.numeric</span><span class="hl std">(</span><span class="hl kwd">format</span><span class="hl std">(trips</span><span class="hl opt">$</span><span class="hl std">starttime,</span> <span class="hl str">&quot;%Y&quot;</span><span class="hl std">))</span> <span class="hl opt">-</span> <span class="hl std">trips</span><span class="hl opt">$</span><span class="hl std">birthday</span>
+
+
+<span class="hl std">stations</span><span class="hl opt">$</span><span class="hl std">online.date</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">as.POSIXct</span><span class="hl std">(</span><span class="hl kwd">strptime</span><span class="hl std">(stations</span><span class="hl opt">$</span><span class="hl std">online.date,</span> <span class="hl kwc">format</span> <span class="hl std">=</span> <span class="hl str">&quot;%m/%d/%Y&quot;</span><span class="hl std">))</span>
+<span class="hl std">stations</span><span class="hl opt">$</span><span class="hl std">daysOnline</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">as.POSIXct</span><span class="hl std">(</span><span class="hl kwd">strptime</span><span class="hl std">(</span><span class="hl str">&quot;12-31-2013&quot;</span><span class="hl std">,</span> <span class="hl kwc">format</span> <span class="hl std">=</span> <span class="hl str">&quot;%m-%d-%Y&quot;</span><span class="hl std">))</span> <span class="hl opt">-</span>
+    <span class="hl std">stations</span><span class="hl opt">$</span><span class="hl std">online.date</span>
+<span class="hl std">tripsByDepart</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">count</span><span class="hl std">(trips,</span> <span class="hl kwd">.</span><span class="hl std">(from_station_id))</span>
+<span class="hl std">tripsByDepart</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">merge</span><span class="hl std">(tripsByDepart, stations,</span> <span class="hl kwc">by.x</span> <span class="hl std">=</span> <span class="hl str">&quot;from_station_id&quot;</span><span class="hl std">,</span> <span class="hl kwc">by.y</span> <span class="hl std">=</span> <span class="hl str">&quot;id&quot;</span><span class="hl std">,</span>
+    <span class="hl kwc">all.x</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">)</span>
+<span class="hl std">tripsByDepart</span><span class="hl opt">$</span><span class="hl std">norm</span> <span class="hl kwb">&lt;-</span> <span class="hl std">tripsByDepart</span><span class="hl opt">$</span><span class="hl std">freq</span><span class="hl opt">/</span><span class="hl kwd">max</span><span class="hl std">(tripsByDepart</span><span class="hl opt">$</span><span class="hl std">freq)</span>
+<span class="hl std">tripsByDepart</span><span class="hl opt">$</span><span class="hl std">log</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">log</span><span class="hl std">(tripsByDepart</span><span class="hl opt">$</span><span class="hl std">freq)</span>
+<span class="hl std">tripsByDepart</span><span class="hl opt">$</span><span class="hl std">normByTime</span> <span class="hl kwb">&lt;-</span> <span class="hl std">tripsByDepart</span><span class="hl opt">$</span><span class="hl std">freq</span><span class="hl opt">/</span><span class="hl kwd">as.numeric</span><span class="hl std">(tripsByDepart</span><span class="hl opt">$</span><span class="hl std">daysOnline)</span>
+<span class="hl std">tripsByDepart</span><span class="hl opt">$</span><span class="hl std">normByTime_norm</span> <span class="hl kwb">&lt;-</span> <span class="hl std">tripsByDepart</span><span class="hl opt">$</span><span class="hl std">normByTime</span><span class="hl opt">/</span><span class="hl kwd">max</span><span class="hl std">(tripsByDepart</span><span class="hl opt">$</span><span class="hl std">normByTime)</span>
+<span class="hl std">tripsByDepart</span><span class="hl opt">$</span><span class="hl std">logNormByTime</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">log</span><span class="hl std">(tripsByDepart</span><span class="hl opt">$</span><span class="hl std">log)</span>
+</pre></div>
+</div></div>
+
+
+<p>Let's look at the distros for trips (everything is a count, so poisson distribution will be important to consider for any modeling</p>
+
+<div class="chunk" id="unnamed-chunk-1"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">hist</span><span class="hl std">(trips</span><span class="hl opt">$</span><span class="hl std">age)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure/unnamed-chunk-1.png" title="plot of chunk unnamed-chunk-1" alt="plot of chunk unnamed-chunk-1" class="plot" /></div></div>
+
+
+<div class="chunk" id="unnamed-chunk-2"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">hist</span><span class="hl std">(trips</span><span class="hl opt">$</span><span class="hl std">tripduration)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure/unnamed-chunk-2.png" title="plot of chunk unnamed-chunk-2" alt="plot of chunk unnamed-chunk-2" class="plot" /></div></div>
+
+
+<div class="chunk" id="unnamed-chunk-3"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl com">## tripduration is in seconds</span>
+<span class="hl std">tripsTrimmed</span> <span class="hl kwb">&lt;-</span> <span class="hl std">trips[trips</span><span class="hl opt">$</span><span class="hl std">tripduration</span> <span class="hl opt">&lt;</span> <span class="hl num">5000</span><span class="hl std">, ]</span>
+<span class="hl kwd">hist</span><span class="hl std">(tripsTrimmed</span><span class="hl opt">$</span><span class="hl std">tripduration)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure/unnamed-chunk-3.png" title="plot of chunk unnamed-chunk-3" alt="plot of chunk unnamed-chunk-3" class="plot" /></div></div>
+
+
+<p>Something else to consider looking at is the time differences between checkouts at each station to get an idea of the demand rate for the station at a given time</p>
+
+<div class="chunk" id="unnamed-chunk-4"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">ggplot</span><span class="hl std">(</span><span class="hl kwd">transform</span><span class="hl std">(tripsByDepart,</span> <span class="hl kwc">name</span> <span class="hl std">=</span> <span class="hl kwd">reorder</span><span class="hl std">(name, normByTime)),</span> <span class="hl kwd">aes</span><span class="hl std">(</span><span class="hl kwc">x</span> <span class="hl std">= name,</span>
+    <span class="hl kwc">y</span> <span class="hl std">= normByTime))</span> <span class="hl opt">+</span> <span class="hl kwd">geom_bar</span><span class="hl std">(</span><span class="hl kwc">stat</span> <span class="hl std">=</span> <span class="hl str">&quot;identity&quot;</span><span class="hl std">)</span> <span class="hl opt">+</span> <span class="hl kwd">coord_flip</span><span class="hl std">()</span>
+</pre></div>
+<div class="warning"><pre class="knitr r">## Warning: position_stack requires constant width: output may be incorrect
+</pre></div>
+</div><div class="rimage default"><img src="figure/unnamed-chunk-4.png" title="plot of chunk unnamed-chunk-4" alt="plot of chunk unnamed-chunk-4" class="plot" /></div></div>
+
+
+
+<p>Let's map some shit... Reading in the data. To map the data provided by Divvy, we need to convert the lat long to tmerc projection matching the city gis data using the sp library</p>
+<div class="chunk" id="Read in Map Layers"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl std">city</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">makeLatLong</span><span class="hl std">(</span><span class="hl str">&quot;City_Boundary&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;City_Boundary&quot;</span><span class="hl std">)</span>
+</pre></div>
+<div class="message"><pre class="knitr r">## Loading required package: rgdal
+## Loading required package: sp
+## rgdal: version: 0.8-16, (SVN revision 498)
+## Geospatial Data Abstraction Library extensions to R successfully loaded
+## Loaded GDAL runtime: GDAL 1.10.1, released 2013/08/26
+## Path to GDAL shared files: C:/Users/jarrodanderin/Documents/R/win-library/3.0/rgdal/gdal
+## GDAL does not use iconv for recoding strings.
+## Loaded PROJ.4 runtime: Rel. 4.8.0, 6 March 2012, [PJ_VERSION: 480]
+## Path to PROJ.4 shared files: C:/Users/jarrodanderin/Documents/R/win-library/3.0/rgdal/proj
+</pre></div>
+<div class="output"><pre class="knitr r">## OGR data source with driver: ESRI Shapefile 
+## Source: "City_Boundary", layer: "City_Boundary"
+## with 1 features and 4 fields
+## Feature type: wkbMultiPolygon with 2 dimensions
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl std">stationMap</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">makeLatLong</span><span class="hl std">(</span><span class="hl str">&quot;Divvy_Stations_2013.shp&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;Divvy_Stations_2013&quot;</span><span class="hl std">)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## OGR data source with driver: ESRI Shapefile 
+## Source: "Divvy_Stations_2013.shp", layer: "Divvy_Stations_2013"
+## with 300 features and 5 fields
+## Feature type: wkbPoint with 2 dimensions
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl std">wards</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">makeLatLong</span><span class="hl std">(</span><span class="hl str">&quot;Boundaries-Wards&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;Wards&quot;</span><span class="hl std">)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## OGR data source with driver: ESRI Shapefile 
+## Source: "Boundaries-Wards", layer: "Wards"
+## with 53 features and 12 fields
+## Feature type: wkbPolygon with 2 dimensions
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl std">bikeRt</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">makeLatLong</span><span class="hl std">(</span><span class="hl str">&quot;Bike_Routes&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;Bikeroutes3&quot;</span><span class="hl std">)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## OGR data source with driver: ESRI Shapefile 
+## Source: "Bike_Routes", layer: "Bikeroutes3"
+## with 957 features and 5 fields
+## Feature type: wkbLineString with 2 dimensions
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl std">cops</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">makeLatLong</span><span class="hl std">(</span><span class="hl str">&quot;Boundaries - Police Beats (current)&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;geo_aerh-rz74-1&quot;</span><span class="hl std">)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## OGR data source with driver: ESRI Shapefile 
+## Source: "Boundaries - Police Beats (current)", layer: "geo_aerh-rz74-1"
+## with 277 features and 5 fields
+## Feature type: wkbPolygon with 2 dimensions
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl std">businessDist</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">makeLatLong</span><span class="hl std">(</span><span class="hl str">&quot;Boundaries_-_Central_Business_District&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;Central_Business_District&quot;</span><span class="hl std">)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## OGR data source with driver: ESRI Shapefile 
+## Source: "Boundaries_-_Central_Business_District", layer: "Central_Business_District"
+## with 1 features and 7 fields
+## Feature type: wkbPolygon with 2 dimensions
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl std">neighborhoods</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">makeLatLong</span><span class="hl std">(</span><span class="hl str">&quot;Neighborhoods_2012&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;Neighborhoods_2012b&quot;</span><span class="hl std">)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## OGR data source with driver: ESRI Shapefile 
+## Source: "Neighborhoods_2012", layer: "Neighborhoods_2012b"
+## with 98 features and 4 fields
+## Feature type: wkbPolygon with 2 dimensions
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl std">neighbCols</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">brewer.pal</span><span class="hl std">(</span><span class="hl num">7</span><span class="hl std">,</span> <span class="hl str">&quot;Set3&quot;</span><span class="hl std">)</span>
+<span class="hl std">neighbCols</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">rep</span><span class="hl std">(</span><span class="hl kwd">rbind</span><span class="hl std">(neighbCols),</span> <span class="hl num">14</span><span class="hl std">)</span>
+<span class="hl com">## majorSt &lt;- makeLatLong('Major_Streets','Major_Streets')</span>
+</pre></div>
+</div></div>
+
+
+<p>Map Showing Bike Routes and Divvy Stations:</p>
+
+<div class="chunk" id="unnamed-chunk-5"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">plot</span><span class="hl std">(city,</span> <span class="hl kwc">xlim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl opt">-</span><span class="hl num">87.70786</span><span class="hl std">,</span> <span class="hl opt">-</span><span class="hl num">87.58071</span><span class="hl std">),</span> <span class="hl kwc">ylim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">41.78875</span><span class="hl std">,</span> <span class="hl num">41.97835</span><span class="hl std">))</span>
+<span class="hl com">## plot(wards,add=TRUE)</span>
+<span class="hl kwd">plot</span><span class="hl std">(bikeRt,</span> <span class="hl kwc">add</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">)</span>
+<span class="hl kwd">plot</span><span class="hl std">(stationMap,</span> <span class="hl kwc">add</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">pch</span> <span class="hl std">=</span> <span class="hl num">20</span><span class="hl std">)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure/unnamed-chunk-5.png" title="plot of chunk unnamed-chunk-5" alt="plot of chunk unnamed-chunk-5" class="plot" /></div></div>
+
+
+<p>Map showing ward and Divvy Stations:</p>
+<div class="chunk" id="unnamed-chunk-6"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">plot</span><span class="hl std">(city,</span> <span class="hl kwc">xlim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl opt">-</span><span class="hl num">87.70786</span><span class="hl std">,</span> <span class="hl opt">-</span><span class="hl num">87.58071</span><span class="hl std">),</span> <span class="hl kwc">ylim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">41.78875</span><span class="hl std">,</span> <span class="hl num">41.97835</span><span class="hl std">))</span>
+<span class="hl kwd">plot</span><span class="hl std">(wards,</span> <span class="hl kwc">add</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">)</span>
+<span class="hl kwd">plot</span><span class="hl std">(stationMap,</span> <span class="hl kwc">add</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">pch</span> <span class="hl std">=</span> <span class="hl num">20</span><span class="hl std">)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure/unnamed-chunk-6.png" title="plot of chunk unnamed-chunk-6" alt="plot of chunk unnamed-chunk-6" class="plot" /></div></div>
+
+
+<p>Map showing police and Divvy Stations:</p>
+<div class="chunk" id="unnamed-chunk-7"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">plot</span><span class="hl std">(city,</span> <span class="hl kwc">xlim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl opt">-</span><span class="hl num">87.70786</span><span class="hl std">,</span> <span class="hl opt">-</span><span class="hl num">87.58071</span><span class="hl std">),</span> <span class="hl kwc">ylim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">41.78875</span><span class="hl std">,</span> <span class="hl num">41.97835</span><span class="hl std">))</span>
+<span class="hl kwd">plot</span><span class="hl std">(cops,</span> <span class="hl kwc">add</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">)</span>
+<span class="hl kwd">plot</span><span class="hl std">(stationMap,</span> <span class="hl kwc">add</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">pch</span> <span class="hl std">=</span> <span class="hl num">20</span><span class="hl std">)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure/unnamed-chunk-7.png" title="plot of chunk unnamed-chunk-7" alt="plot of chunk unnamed-chunk-7" class="plot" /></div></div>
+
+
+<p>Map showing business district and Divvy Stations:</p>
+<div class="chunk" id="unnamed-chunk-8"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">plot</span><span class="hl std">(city,</span> <span class="hl kwc">xlim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl opt">-</span><span class="hl num">87.70786</span><span class="hl std">,</span> <span class="hl opt">-</span><span class="hl num">87.58071</span><span class="hl std">),</span> <span class="hl kwc">ylim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">41.78875</span><span class="hl std">,</span> <span class="hl num">41.97835</span><span class="hl std">))</span>
+<span class="hl kwd">plot</span><span class="hl std">(neighborhoods,</span> <span class="hl kwc">add</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">col</span> <span class="hl std">= neighbCols)</span>
+<span class="hl kwd">plot</span><span class="hl std">(businessDist,</span> <span class="hl kwc">add</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">)</span>
+<span class="hl kwd">plot</span><span class="hl std">(stationMap,</span> <span class="hl kwc">add</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">pch</span> <span class="hl std">=</span> <span class="hl num">20</span><span class="hl std">)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure/unnamed-chunk-8.png" title="plot of chunk unnamed-chunk-8" alt="plot of chunk unnamed-chunk-8" class="plot" /></div></div>
+
+
+
+<p>Map showing neighborhoods, normalized pickups by Divvy Stations:</p>
+<div class="chunk" id="unnamed-chunk-9"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">plot</span><span class="hl std">(city,</span> <span class="hl kwc">xlim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl opt">-</span><span class="hl num">87.70786</span><span class="hl std">,</span> <span class="hl opt">-</span><span class="hl num">87.58071</span><span class="hl std">),</span> <span class="hl kwc">ylim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">41.78875</span><span class="hl std">,</span> <span class="hl num">41.97835</span><span class="hl std">))</span>
+<span class="hl kwd">plot</span><span class="hl std">(neighborhoods,</span> <span class="hl kwc">add</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">col</span> <span class="hl std">= neighbCols)</span>
+<span class="hl kwd">points</span><span class="hl std">(tripsByDepart</span><span class="hl opt">$</span><span class="hl std">longitude, tripsByDepart</span><span class="hl opt">$</span><span class="hl std">latitude,</span> <span class="hl kwc">pch</span> <span class="hl std">=</span> <span class="hl num">20</span><span class="hl std">,</span> <span class="hl kwc">cex</span> <span class="hl std">= (tripsByDepart</span><span class="hl opt">$</span><span class="hl std">normByTime_norm)</span> <span class="hl opt">*</span>
+    <span class="hl num">5</span><span class="hl std">)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure/unnamed-chunk-9.png" title="plot of chunk unnamed-chunk-9" alt="plot of chunk unnamed-chunk-9" class="plot" /></div></div>
+
+
+</body>
+</html>

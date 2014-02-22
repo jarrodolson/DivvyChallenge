@@ -1,0 +1,126 @@
+<html>
+
+<head>
+<title>Divvy Challenge Notes</title>
+</head>
+
+<body>
+
+<p>Code and notes for visualizing Divvy data <a href='http://divvybikes.com/datachallenge'> at this website</a></p>
+
+<p>Need some basic functions to ease data input</p>
+<!--begin.rcode label="Functions for support"
+library(ggplot2)
+library(plyr)
+library(RColorBrewer)
+makeLatLong <- function(dir,fi){
+  require(rgdal)
+  require(sp)
+  layer <- readOGR(dir, layer=fi)
+  layer <- spTransform(layer,CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+  return(layer)
+}
+end.rcode-->
+
+##32
+<p>Reading in data and starting up libraries
+<!--begin.rcode label="Read In CSV"
+stations <- read.csv("Divvy_Stations_2013.csv",header=TRUE,stringsAsFactors=FALSE)
+trips <- read.csv("Divvy_Trips_2013.csv", header=TRUE, stringsAsFactors=FALSE)
+
+trips$starttime <- as.POSIXct(strptime(trips$starttime,format="%Y-%m-%d %H:%M"))
+trips$stoptime <- as.POSIXct(strptime(trips$stoptime,format="%Y-%m-%d %H:%M"))
+trips$age <- as.numeric(format(trips$starttime,"%Y"))-trips$birthday
+
+
+stations$online.date <- as.POSIXct(strptime(stations$online.date,format="%m/%d/%Y"))
+stations$daysOnline <- as.POSIXct(strptime("12-31-2013",format="%m-%d-%Y"))-stations$online.date
+tripsByDepart <- count(trips, .(from_station_id))
+tripsByDepart <- merge(tripsByDepart,stations,by.x="from_station_id",by.y="id",all.x=TRUE)
+tripsByDepart$norm <- tripsByDepart$freq/max(tripsByDepart$freq)
+tripsByDepart$log <- log(tripsByDepart$freq)
+tripsByDepart$normByTime <- tripsByDepart$freq/as.numeric(tripsByDepart$daysOnline)
+tripsByDepart$normByTime_norm <- tripsByDepart$normByTime/max(tripsByDepart$normByTime)
+tripsByDepart$logNormByTime <- log(tripsByDepart$log)
+end.rcode-->
+
+<p>Let's look at the distros for trips (everything is a count, so poisson distribution will be important to consider for any modeling</p>
+
+<!--begin.rcode fig.height=10, fig.width=10
+hist(trips$age)
+end.rcode-->
+
+<!--begin.rcode fig.height=10, fig.width=10
+hist(trips$tripduration)
+end.rcode-->
+
+<!--begin.rcode fig.height=10, fig.width=10
+##tripduration is in seconds
+tripsTrimmed <- trips[trips$tripduration<5000,]
+hist(tripsTrimmed$tripduration)
+end.rcode-->
+
+<p>Something else to consider looking at is the time differences between checkouts at each station to get an idea of the demand rate for the station at a given time</p>
+
+<!--begin.rcode fig.width=20, fig.width=8
+ggplot(transform(tripsByDepart,name=reorder(name,normByTime)),aes(x=name,y=normByTime))+geom_bar(stat="identity")+coord_flip()
+end.rcode-->
+
+
+<p>Let's map some shit... Reading in the data. To map the data provided by Divvy, we need to convert the lat long to tmerc projection matching the city gis data using the sp library</p>
+<!--begin.rcode label="Read in Map Layers"
+city <- makeLatLong("City_Boundary","City_Boundary")
+stationMap <- makeLatLong("Divvy_Stations_2013.shp","Divvy_Stations_2013")
+wards <- makeLatLong("Boundaries-Wards","Wards")
+bikeRt <- makeLatLong("Bike_Routes","Bikeroutes3")
+cops <- makeLatLong("Boundaries - Police Beats (current)","geo_aerh-rz74-1")
+businessDist <- makeLatLong("Boundaries_-_Central_Business_District","Central_Business_District")
+neighborhoods <- makeLatLong("Neighborhoods_2012","Neighborhoods_2012b")
+neighbCols <- brewer.pal(7,"Set3")
+neighbCols <- rep(rbind(neighbCols),14)
+##majorSt <- makeLatLong("Major_Streets","Major_Streets")
+end.rcode-->
+
+<p>Map Showing Bike Routes and Divvy Stations:</p>
+
+<!--begin.rcode fig.width=10, fig.height=10
+plot(city,xlim=c(-87.70786,-87.58071),ylim=c(41.78875,41.97835))
+##plot(wards,add=TRUE)
+plot(bikeRt,add=TRUE)
+plot(stationMap,add=TRUE,pch=20)
+
+end.rcode-->
+
+<p>Map showing ward and Divvy Stations:</p>
+<!--begin.rcode fig.width=10, fig.height=10
+plot(city,xlim=c(-87.70786,-87.58071),ylim=c(41.78875,41.97835))
+plot(wards,add=TRUE)
+plot(stationMap,add=TRUE,pch=20)
+
+end.rcode-->
+
+<p>Map showing police and Divvy Stations:</p>
+<!--begin.rcode fig.width=10, fig.height=10
+plot(city,xlim=c(-87.70786,-87.58071),ylim=c(41.78875,41.97835))
+plot(cops,add=TRUE)
+plot(stationMap,add=TRUE,pch=20)
+end.rcode-->
+
+<p>Map showing business district and Divvy Stations:</p>
+<!--begin.rcode fig.width=10, fig.height=10
+plot(city,xlim=c(-87.70786,-87.58071),ylim=c(41.78875,41.97835))
+plot(neighborhoods,add=TRUE,col=neighbCols)
+plot(businessDist,add=TRUE)
+plot(stationMap,add=TRUE,pch=20)
+end.rcode-->
+
+
+<p>Map showing neighborhoods, normalized pickups by Divvy Stations:</p>
+<!--begin.rcode fig.width=10, fig.height=10
+plot(city,xlim=c(-87.70786,-87.58071),ylim=c(41.78875,41.97835))
+plot(neighborhoods,add=TRUE,col=neighbCols)
+points(tripsByDepart$longitude,tripsByDepart$latitude,pch=20,cex=(tripsByDepart$normByTime_norm)*5)
+end.rcode-->
+
+</body>
+</html>
