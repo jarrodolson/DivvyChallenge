@@ -1,0 +1,22 @@
+{
+    "contents" : "",
+    "created" : 1393104487518.000,
+    "dirty" : false,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "B0662532",
+    "lastKnownWriteTime" : 7741240722073845761,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "caption" : "trips[!is.na(trips$birthday), ]",
+        "contentUrl" : "content?title=trips%5B!is.na(trips%24birthday)%2C+%5D&file=b4440937503e4f328b92715304783f0d.htm",
+        "displayedObservations" : 1000,
+        "displayedVariables" : 13,
+        "totalObservations" : 402909,
+        "variables" : 12
+    },
+    "source_on_save" : false,
+    "type" : "r_dataframe"
+}

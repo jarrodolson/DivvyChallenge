@@ -1,0 +1,22 @@
+{
+    "contents" : "",
+    "created" : 1393097766955.000,
+    "dirty" : false,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "F1A2F0D",
+    "lastKnownWriteTime" : 7741240723082584096,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "caption" : "trips",
+        "contentUrl" : "content?title=trips&file=ac5057d3d2c44e73b91e7e78d00c791f.htm",
+        "displayedObservations" : "1000",
+        "displayedVariables" : 12,
+        "totalObservations" : "759788",
+        "variables" : "13"
+    },
+    "source_on_save" : false,
+    "type" : "r_dataframe"
+}

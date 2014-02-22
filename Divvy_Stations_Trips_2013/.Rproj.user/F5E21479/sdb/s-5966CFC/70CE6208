@@ -1,0 +1,22 @@
+{
+    "contents" : "",
+    "created" : 1393082456216.000,
+    "dirty" : false,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "70CE6208",
+    "lastKnownWriteTime" : 7741240723082584096,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "caption" : "stations",
+        "contentUrl" : "content?title=stations&file=1cfa11658dd74397ba719425783fe33f.htm",
+        "displayedObservations" : "300",
+        "displayedVariables" : 7,
+        "totalObservations" : "300",
+        "variables" : "8"
+    },
+    "source_on_save" : false,
+    "type" : "r_dataframe"
+}
