@@ -5,7 +5,7 @@
 </head>
 
 <body>
-
+<h1>Divvy Challenge Notes</h1>
 <p>Code and notes for visualizing Divvy data <a href='http://divvybikes.com/datachallenge'> at this website</a></p>
 
 <p>Need some basic functions to ease data input</p>
@@ -13,6 +13,7 @@
 library(ggplot2)
 library(plyr)
 library(RColorBrewer)
+library(dplyr)
 makeLatLong <- function(dir,fi){
   require(rgdal)
   require(sp)
@@ -20,6 +21,24 @@ makeLatLong <- function(dir,fi){
   layer <- spTransform(layer,CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
   return(layer)
 }
+
+getDateComponents <- function(vect){
+  print("Returns a separate dataframe that can be renamed and cbinded to input dataset")
+  month <- format(vect, "%m")
+  day <- format(vect, "%d")
+  day_str <- format(vect, "%a")
+  time <- format(vect,"%H:%M")
+  time <- as.POSIXct(strptime(vect,format="%H:%M"))
+  hr <- format(vect,"%H")
+  df <- data.frame(month=month,day=day,day_str=day_str,time=time,hr=hr)
+  return(df)
+}
+refPoints <- data.frame(Location=c("MOHAI","FieldMuseum","NavyPier","WrigleyField"),
+                        latitude=c(41.7905733,41.8661567,41.8915194,41.9478307),
+                        longitude=c(-87.5830607,-87.6170968,-87.6025343,-87.6559023))
+
+
+
 end.rcode-->
 
 ##32
@@ -31,7 +50,8 @@ trips <- read.csv("Divvy_Trips_2013.csv", header=TRUE, stringsAsFactors=FALSE)
 trips$starttime <- as.POSIXct(strptime(trips$starttime,format="%Y-%m-%d %H:%M"))
 trips$stoptime <- as.POSIXct(strptime(trips$stoptime,format="%Y-%m-%d %H:%M"))
 trips$age <- as.numeric(format(trips$starttime,"%Y"))-trips$birthday
-
+trips$loop <- 0
+trips$loop[trips$from_station_id==trips$to_station_id] <- 1
 
 stations$online.date <- as.POSIXct(strptime(stations$online.date,format="%m/%d/%Y"))
 stations$daysOnline <- as.POSIXct(strptime("12-31-2013",format="%m-%d-%Y"))-stations$online.date
@@ -60,13 +80,141 @@ tripsTrimmed <- trips[trips$tripduration<5000,]
 hist(tripsTrimmed$tripduration)
 end.rcode-->
 
+<p>Where are the rides going? How many are just loops?</p>
+<!--begin.rcode fig.height=10, fig.width=10
+loopCount <- count(trips,.(loop))
+ggplot(loopCount,aes(x=loop,y=freq))+geom_bar(stat="identity")
+end.rcode-->
+<p>What about if we map them by nLoops... where are the loops taking place? (see below in the mapping section)</p>
+<!--begin.rcode
+loopCount2 <- count(trips,.(from_station_id,loop))
+loopCount2 <- merge(loopCount2, stations,by.x="from_station_id",by.y="id",all.x=TRUE)
+loopCount2 <- arrange(loopCount2,-freq)
+loopCount2$norm <- loopCount2$freq/max(loopCount2$freq)
+loopCount2Wide <- reshape(loopCount2,idvar=c("from_station_id","name","latitude","longitude","dpcapacity","landmark","online.date","daysOnline"),timevar="loop",direction="wide")
+loopCount2Wide$stationProbLoop <- (loopCount2Wide$freq.1/(loopCount2Wide$freq.1+loopCount2Wide$freq.0))*100
+loopCount2Wide <- arrange(loopCount2Wide, -stationProbLoop)
+end.rcode-->
+
+
+<p>What about demographic differences btwn loopers</p>
+<!--begin.rcode fig.height=10, fig.width=10
+loopersMen <- count(trips,.(loop,gender))
+loopersMen$gender[loopersMen$gender!="Male" & loopersMen$gender!="Female"]<-"Unknown"
+loopersMen <- reshape(loopersMen, idvar=c("loop"),timevar="gender",direction="wide")
+loopersMen$perWomen <- loopersMen$freq.Female/(loopersMen$freq.Female+loopersMen$freq.Male)
+loopersMen$perMan <- loopersMen$freq.Male/(loopersMen$freq.Female+loopersMen$freq.Male)
+loopersMen
+end.rcode-->
+<P>There is no difference in the choice of a man or a woman for predicting a loop.
+<!--begin.rcode
+loopers <- ddply(trips,.(loop),summarize,
+                 meanAge=mean(age,na.rm=TRUE),
+                 sdAge=sd(age,na.rm=TRUE),
+                 meanTime = mean(tripduration,na.rm=TRUE),
+                 sdTime = sd(tripduration,na.rm=TRUE))
+loopers
+end.rcode-->
+<p>There is no difference in the demographics for predicting a loop trip</p>
+
 <p>Something else to consider looking at is the time differences between checkouts at each station to get an idea of the demand rate for the station at a given time</p>
+<p>First step... let's create a datapoint for the time between arrivals for a single station (practice)</p>
+<!--begin.rcode
+trips85 <- trips %.%
+  filter(to_station_id==85)%.%
+  arrange(stoptime)
+trips85$diff <- c(NA,diff(trips85$stoptime))
+stoptimes <- getDateComponents(trips85$stoptime)
+colnames(stoptimes) <- c("stopMonth","stopDay","stopDay_str","stopTime","stopHr")
+starttimes <- getDateComponents(trips85$starttime)
+colnames(starttimes) <- c("startMonth","startDay","startDay_str","startTime","startHr")
+trips85 <- cbind(trips85,stoptimes,starttimes)
+end.rcode-->
+
+<p>First we look at arrivals...<p>
+<!--begin.rcode fig.width=10, fig.height=10
+##This will look at difference by time for a given day, averaging all months and weeks together
+avgDiffStop <- ddply(trips85,.(stopDay_str,stopHr),summarize,meanDif = mean(diff,na.rm=TRUE))
+ggplot(avgDiffStop,aes(x=as.integer(stopHr),y=meanDif))+geom_line()+facet_wrap(~ stopDay_str)+ggtitle("Latency of Bike Arrival at station 85")
+end.rcode-->
+<p>Interesting periods of high demand in the middle of the night (represented by lower values)</p>
+
+<p>Then we look at departures...<\p>
+<!--begin.rcode fig.width=10, fig.height=10
+##This will look at difference by time for a given day, averaging all months and weeks together
+trips85D <- trips %.%
+  filter(from_station_id==85)%.%
+  arrange(starttime)
+trips85D$diff <- c(NA,diff(trips85D$starttime))
+starttimes <- getDateComponents(trips85D$starttime)
+colnames(starttimes) <- c("startMonth","startDay","startDay_str","startTime","startHr")
+trips85D <- cbind(trips85D,starttimes)
+avgDiffStart <- ddply(trips85D,.(startDay_str,startHr),summarize,meanDif = mean(diff,na.rm=TRUE))
+ggplot(avgDiffStart,aes(x=as.integer(startHr),y=meanDif))+geom_line()+facet_wrap(~ startDay_str)+ggtitle("Latency of Bike Departure at station 85")
+end.rcode-->
+<p>Similar patterns as above... now it would be cool to see them together</p>
+
+<!--begin.rcode fig.width=10, fig.height=10
+colnames(avgDiffStop) <- c("Day_str","Hr","meanDif")
+avgDiffStop$version <- "Arrival"
+colnames(avgDiffStart) <- c("Day_str","Hr","meanDif")
+avgDiffStart$version <- "Departure"
+avgDiffCombo <- rbind(avgDiffStop,avgDiffStart)
+ggplot(avgDiffCombo, aes(x=as.integer(Hr),y=meanDif,color=version))+geom_line()+facet_wrap(~ Day_str)+ggtitle("Latency of Bike Arrival and Departure")
+end.rcode-->
+<p>Cool (maybe) informative? Not really. It appears that both timeseries follow roughly the same pattern... let's try to do some comparison though</p>
+
+<p>Need to compare diffs for each station. First, we get the diffs, based on station</p>
+<!--begin.rcode
+trips <- trips %.%
+  arrange(to_station_id, stoptime)
+
+doStopDiffsPanel <- function(x){
+  x$stopdiffs <- c(NA,diff(x$stoptime))
+  if(nrow(x)!=length(x$stopdiffs)){print("ERROR")}
+  return(x)
+}
+
+doStartDiffsPanel <- function(x){
+  x$startdiffs <- c(NA,diff(x$starttime))
+  if(nrow(x)!=length(x$startdiffs)){print("ERROR")}
+  return(x)
+}
+
+##Get diff by panel
+trips <- ddply(trips,.(to_station_id),doStopDiffsPanel)
+
+trips <- trips %.%
+  arrange(from_station_id, starttime)
+trips <- ddply(trips,.(from_station_id),doStartDiffsPanel)
+
+end.rcode-->
+
+<p>Now we want to look at average diff and sd for each station, aggregating all days and times</p>
+<!--begin.rcode
+avgStartDiffs_all <- ddply(trips,.(from_station_id),summarize,
+                      meanStartDiff=mean(startdiffs,na.rm=TRUE),
+                      sdStartDiff = sd(startdiffs,na.rm=TRUE))
+avgStopDiffs_all <- ddply(trips,.(to_station_id),summarize,
+                          meanStopDiff=mean(stopdiffs,na.rm=TRUE),
+                          sdStopDiff=sd(stopdiffs,na.rm=TRUE))
+avgDiffs_all <- merge(avgStartDiffs_all,avgStopDiffs_all,by.x="from_station_id",by.y="to_station_id",all=TRUE)
+avgDiffs_all$avgDiff <- (avgDiffs_all$meanStartDiff+avgDiffs_all$meanStopDiff)/2
+avgDiffs_all <- merge(stations,avgDiffs_all,by.x="id",by.y="from_station_id",all=TRUE)
+
+avgDiffs_all <- arrange(avgDiffs_all,avgDiff)
+
+avgDiffs_all[1:10,c(2,5,6,9:13)]
+
+end.rcode-->
+
 
 <!--begin.rcode fig.width=20, fig.width=8
 ggplot(transform(tripsByDepart,name=reorder(name,normByTime)),aes(x=name,y=normByTime))+geom_bar(stat="identity")+coord_flip()
 end.rcode-->
 
 
+<h1>Maps</h1>
 <p>Let's map some shit... Reading in the data. To map the data provided by Divvy, we need to convert the lat long to tmerc projection matching the city gis data using the sp library</p>
 <!--begin.rcode label="Read in Map Layers"
 city <- makeLatLong("City_Boundary","City_Boundary")
@@ -78,6 +226,7 @@ businessDist <- makeLatLong("Boundaries_-_Central_Business_District","Central_Bu
 neighborhoods <- makeLatLong("Neighborhoods_2012","Neighborhoods_2012b")
 neighbCols <- brewer.pal(7,"Set3")
 neighbCols <- rep(rbind(neighbCols),14)
+water <- makeLatLong("Waterways","Hydro")
 ##majorSt <- makeLatLong("Major_Streets","Major_Streets")
 end.rcode-->
 
@@ -88,7 +237,9 @@ plot(city,xlim=c(-87.70786,-87.58071),ylim=c(41.78875,41.97835))
 ##plot(wards,add=TRUE)
 plot(bikeRt,add=TRUE)
 plot(stationMap,add=TRUE,pch=20)
-
+plot(water,add=TRUE,col="Blue",border="blue")
+points(refPoints$longitude,y=refPoints$latitude,pch=20,cex=1,col="red")
+text(refPoints$longitude+.01,y=refPoints$latitude+.005,labels=refPoints$Location,cex=.5)
 end.rcode-->
 
 <p>Map showing ward and Divvy Stations:</p>
@@ -96,7 +247,9 @@ end.rcode-->
 plot(city,xlim=c(-87.70786,-87.58071),ylim=c(41.78875,41.97835))
 plot(wards,add=TRUE)
 plot(stationMap,add=TRUE,pch=20)
-
+plot(water,add=TRUE,col="Blue",border="blue")
+points(refPoints$longitude,y=refPoints$latitude,pch=20,cex=1,col="red")
+text(refPoints$longitude+.01,y=refPoints$latitude+.005,labels=refPoints$Location,cex=.5)
 end.rcode-->
 
 <p>Map showing police and Divvy Stations:</p>
@@ -104,6 +257,9 @@ end.rcode-->
 plot(city,xlim=c(-87.70786,-87.58071),ylim=c(41.78875,41.97835))
 plot(cops,add=TRUE)
 plot(stationMap,add=TRUE,pch=20)
+plot(water,add=TRUE,col="Blue",border="blue")
+points(refPoints$longitude,y=refPoints$latitude,pch=20,cex=1,col="red")
+text(refPoints$longitude+.01,y=refPoints$latitude+.005,labels=refPoints$Location,cex=.5)
 end.rcode-->
 
 <p>Map showing business district and Divvy Stations:</p>
@@ -111,7 +267,10 @@ end.rcode-->
 plot(city,xlim=c(-87.70786,-87.58071),ylim=c(41.78875,41.97835))
 plot(neighborhoods,add=TRUE,col=neighbCols)
 plot(businessDist,add=TRUE)
+plot(water,add=TRUE,col="Blue",border="blue")
 plot(stationMap,add=TRUE,pch=20)
+points(refPoints$longitude,y=refPoints$latitude,pch=20,cex=1,col="red")
+text(refPoints$longitude+.01,y=refPoints$latitude+.005,labels=refPoints$Location,cex=.5)
 end.rcode-->
 
 
@@ -119,8 +278,43 @@ end.rcode-->
 <!--begin.rcode fig.width=10, fig.height=10
 plot(city,xlim=c(-87.70786,-87.58071),ylim=c(41.78875,41.97835))
 plot(neighborhoods,add=TRUE,col=neighbCols)
+plot(water,add=TRUE,col="Blue",border="blue")
 points(tripsByDepart$longitude,tripsByDepart$latitude,pch=20,cex=(tripsByDepart$normByTime_norm)*5)
+points(refPoints$longitude,y=refPoints$latitude,pch=20,cex=1,col="red")
+text(refPoints$longitude+.01,y=refPoints$latitude+.005,labels=refPoints$Location,cex=.5)
 end.rcode-->
+
+<p>Here we look at the total number of looped trips
+<!--begin.rcode fig.height=10,fig.width=10
+
+plot(city,xlim=c(-87.70786,-87.58071),ylim=c(41.78875,41.97835))
+plot(neighborhoods,add=TRUE,col=neighbCols)
+plot(water,add=TRUE,col="Blue",border="blue")
+points(loopCount2$longitude,loopCount2$latitude,pch=20,cex=(loopCount2$norm)*3)
+points(refPoints$longitude,y=refPoints$latitude,pch=20,cex=1,col="red")
+text(refPoints$longitude+.01,y=refPoints$latitude+.005,labels=refPoints$Location,cex=.5)
+end.rcode-->
+
+<p>Here we look at the total percentage of looped trips</p>
+<!--begin.rcode fig.height=10,fig.width=10
+plot(city,xlim=c(-87.70786,-87.58071),ylim=c(41.78875,41.97835))
+plot(neighborhoods,add=TRUE,col=neighbCols)
+points(loopCount2Wide$longitude,loopCount2Wide$latitude,pch=20,cex=(loopCount2Wide$stationProbLoop/100)*10)
+points(refPoints$longitude,y=refPoints$latitude,pch=20,cex=1,col="red")
+text(refPoints$longitude+.01,y=refPoints$latitude+.005,labels=refPoints$Location,cex=.5)
+end.rcode-->
+<p>Interesting insight - While they may not represent the most trips, the highest percentage of looped trips are the bike stations on the periphery, suggesting that people are just getting the bike for a trip away from other Divvy stations and then bringing it back.</p>
+
+<p>Let's take a look at the highest velocity stations</p>
+<!--begin.rcode fig.height=10, fig.width=10
+plot(city,xlim=c(-87.70786,-87.58071),ylim=c(41.78875,41.97835))
+plot(neighborhoods,add=TRUE,col=neighbCols)
+plot(water,add=TRUE,col="Blue",border="blue")
+points(avgDiffs_all$longitude,avgDiffs_all$latitude,pch=20,cex=((1/avgDiffs_all$avgDiff)*1000)*2)
+points(refPoints$longitude,y=refPoints$latitude,pch=20,cex=1,col="red")
+text(refPoints$longitude+.01,y=refPoints$latitude+.005,labels=refPoints$Location,cex=.5)
+end.rcode-->
+
 
 </body>
 </html>

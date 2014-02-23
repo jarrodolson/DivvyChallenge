@@ -1,0 +1,14 @@
+To Do:
+ - (done)Look at loops (bar chart, then map them with nLoops as size of dots
+ - (Done-ish) Look at loops by station (are stations inside of parks or other similar locations mostly loops?)
+ - (Done) How long is a loop trip vs. a non-loop trip
+ - (Done) What are demographics for a loop trip vs. a non-loop trip
+
+ - (Visualized) Model demand rate for departures and for arrivals
+ - (Done)Plot demand rate using histogram (looking at distro... should be poisson distributed)
+ - Plot demand rate over time, for everyone, then by station (Done)
+ - Build I/O model for each of the stations to get an idea of where deliveries are necessary
+
+ - Look at the stories for a bike
+	- Which one is most heavily used
+	- Follow one that travels a lot of different places (i.e. map it... it would be cool to make it a moving plot showing each trip
