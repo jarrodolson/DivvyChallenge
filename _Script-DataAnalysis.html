@@ -67,20 +67,53 @@
 </head>
 
 <body>
-
+<h1>Divvy Challenge Notes</h1>
 <p>Code and notes for visualizing Divvy data <a href='http://divvybikes.com/datachallenge'> at this website</a></p>
 
 <p>Need some basic functions to ease data input</p>
 <div class="chunk" id="Functions for support"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">library</span><span class="hl std">(ggplot2)</span>
 <span class="hl kwd">library</span><span class="hl std">(plyr)</span>
 <span class="hl kwd">library</span><span class="hl std">(RColorBrewer)</span>
-<span class="hl std">makeLatLong</span> <span class="hl kwb">&lt;-</span> <span class="hl kwa">function</span><span class="hl std">(</span><span class="hl kwc">dir</span><span class="hl std">,</span> <span class="hl kwc">fi</span><span class="hl std">) {</span>
+<span class="hl kwd">library</span><span class="hl std">(dplyr)</span>
+</pre></div>
+<div class="message"><pre class="knitr r">## 
+## Attaching package: 'dplyr'
+## 
+## The following objects are masked from 'package:plyr':
+## 
+##     arrange, desc, failwith, id, mutate, summarise
+## 
+## The following objects are masked from 'package:stats':
+## 
+##     filter, lag
+## 
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl std">makeLatLong</span> <span class="hl kwb">&lt;-</span> <span class="hl kwa">function</span><span class="hl std">(</span><span class="hl kwc">dir</span><span class="hl std">,</span> <span class="hl kwc">fi</span><span class="hl std">) {</span>
     <span class="hl kwd">require</span><span class="hl std">(rgdal)</span>
     <span class="hl kwd">require</span><span class="hl std">(sp)</span>
     <span class="hl std">layer</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">readOGR</span><span class="hl std">(dir,</span> <span class="hl kwc">layer</span> <span class="hl std">= fi)</span>
     <span class="hl std">layer</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">spTransform</span><span class="hl std">(layer,</span> <span class="hl kwd">CRS</span><span class="hl std">(</span><span class="hl str">&quot;+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0&quot;</span><span class="hl std">))</span>
     <span class="hl kwd">return</span><span class="hl std">(layer)</span>
 <span class="hl std">}</span>
+
+<span class="hl std">getDateComponents</span> <span class="hl kwb">&lt;-</span> <span class="hl kwa">function</span><span class="hl std">(</span><span class="hl kwc">vect</span><span class="hl std">) {</span>
+    <span class="hl kwd">print</span><span class="hl std">(</span><span class="hl str">&quot;Returns a separate dataframe that can be renamed and cbinded to input dataset&quot;</span><span class="hl std">)</span>
+    <span class="hl std">month</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">format</span><span class="hl std">(vect,</span> <span class="hl str">&quot;%m&quot;</span><span class="hl std">)</span>
+    <span class="hl std">day</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">format</span><span class="hl std">(vect,</span> <span class="hl str">&quot;%d&quot;</span><span class="hl std">)</span>
+    <span class="hl std">day_str</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">format</span><span class="hl std">(vect,</span> <span class="hl str">&quot;%a&quot;</span><span class="hl std">)</span>
+    <span class="hl std">time</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">format</span><span class="hl std">(vect,</span> <span class="hl str">&quot;%H:%M&quot;</span><span class="hl std">)</span>
+    <span class="hl std">time</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">as.POSIXct</span><span class="hl std">(</span><span class="hl kwd">strptime</span><span class="hl std">(vect,</span> <span class="hl kwc">format</span> <span class="hl std">=</span> <span class="hl str">&quot;%H:%M&quot;</span><span class="hl std">))</span>
+    <span class="hl std">hr</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">format</span><span class="hl std">(vect,</span> <span class="hl str">&quot;%H&quot;</span><span class="hl std">)</span>
+    <span class="hl std">df</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">data.frame</span><span class="hl std">(</span><span class="hl kwc">month</span> <span class="hl std">= month,</span> <span class="hl kwc">day</span> <span class="hl std">= day,</span> <span class="hl kwc">day_str</span> <span class="hl std">= day_str,</span> <span class="hl kwc">time</span> <span class="hl std">= time,</span>
+        <span class="hl kwc">hr</span> <span class="hl std">= hr)</span>
+    <span class="hl kwd">return</span><span class="hl std">(df)</span>
+<span class="hl std">}</span>
+<span class="hl std">refPoints</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">data.frame</span><span class="hl std">(</span><span class="hl kwc">Location</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;MOHAI&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;FieldMuseum&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;NavyPier&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;WrigleyField&quot;</span><span class="hl std">),</span>
+    <span class="hl kwc">latitude</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">41.7905733</span><span class="hl std">,</span> <span class="hl num">41.8661567</span><span class="hl std">,</span> <span class="hl num">41.8915194</span><span class="hl std">,</span> <span class="hl num">41.9478307</span><span class="hl std">),</span> <span class="hl kwc">longitude</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl opt">-</span><span class="hl num">87.5830607</span><span class="hl std">,</span>
+        <span class="hl opt">-</span><span class="hl num">87.6170968</span><span class="hl std">,</span> <span class="hl opt">-</span><span class="hl num">87.6025343</span><span class="hl std">,</span> <span class="hl opt">-</span><span class="hl num">87.6559023</span><span class="hl std">))</span>
 </pre></div>
 </div></div>
 
@@ -93,7 +126,8 @@
 <span class="hl std">trips</span><span class="hl opt">$</span><span class="hl std">starttime</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">as.POSIXct</span><span class="hl std">(</span><span class="hl kwd">strptime</span><span class="hl std">(trips</span><span class="hl opt">$</span><span class="hl std">starttime,</span> <span class="hl kwc">format</span> <span class="hl std">=</span> <span class="hl str">&quot;%Y-%m-%d %H:%M&quot;</span><span class="hl std">))</span>
 <span class="hl std">trips</span><span class="hl opt">$</span><span class="hl std">stoptime</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">as.POSIXct</span><span class="hl std">(</span><span class="hl kwd">strptime</span><span class="hl std">(trips</span><span class="hl opt">$</span><span class="hl std">stoptime,</span> <span class="hl kwc">format</span> <span class="hl std">=</span> <span class="hl str">&quot;%Y-%m-%d %H:%M&quot;</span><span class="hl std">))</span>
 <span class="hl std">trips</span><span class="hl opt">$</span><span class="hl std">age</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">as.numeric</span><span class="hl std">(</span><span class="hl kwd">format</span><span class="hl std">(trips</span><span class="hl opt">$</span><span class="hl std">starttime,</span> <span class="hl str">&quot;%Y&quot;</span><span class="hl std">))</span> <span class="hl opt">-</span> <span class="hl std">trips</span><span class="hl opt">$</span><span class="hl std">birthday</span>
-
+<span class="hl std">trips</span><span class="hl opt">$</span><span class="hl std">loop</span> <span class="hl kwb">&lt;-</span> <span class="hl num">0</span>
+<span class="hl std">trips</span><span class="hl opt">$</span><span class="hl std">loop[trips</span><span class="hl opt">$</span><span class="hl std">from_station_id</span> <span class="hl opt">==</span> <span class="hl std">trips</span><span class="hl opt">$</span><span class="hl std">to_station_id]</span> <span class="hl kwb">&lt;-</span> <span class="hl num">1</span>
 
 <span class="hl std">stations</span><span class="hl opt">$</span><span class="hl std">online.date</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">as.POSIXct</span><span class="hl std">(</span><span class="hl kwd">strptime</span><span class="hl std">(stations</span><span class="hl opt">$</span><span class="hl std">online.date,</span> <span class="hl kwc">format</span> <span class="hl std">=</span> <span class="hl str">&quot;%m/%d/%Y&quot;</span><span class="hl std">))</span>
 <span class="hl std">stations</span><span class="hl opt">$</span><span class="hl std">daysOnline</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">as.POSIXct</span><span class="hl std">(</span><span class="hl kwd">strptime</span><span class="hl std">(</span><span class="hl str">&quot;12-31-2013&quot;</span><span class="hl std">,</span> <span class="hl kwc">format</span> <span class="hl std">=</span> <span class="hl str">&quot;%m-%d-%Y&quot;</span><span class="hl std">))</span> <span class="hl opt">-</span>
@@ -129,17 +163,203 @@
 </div><div class="rimage default"><img src="figure/unnamed-chunk-3.png" title="plot of chunk unnamed-chunk-3" alt="plot of chunk unnamed-chunk-3" class="plot" /></div></div>
 
 
-<p>Something else to consider looking at is the time differences between checkouts at each station to get an idea of the demand rate for the station at a given time</p>
+<p>Where are the rides going? How many are just loops?</p>
+<div class="chunk" id="unnamed-chunk-4"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl std">loopCount</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">count</span><span class="hl std">(trips,</span> <span class="hl kwd">.</span><span class="hl std">(loop))</span>
+<span class="hl kwd">ggplot</span><span class="hl std">(loopCount,</span> <span class="hl kwd">aes</span><span class="hl std">(</span><span class="hl kwc">x</span> <span class="hl std">= loop,</span> <span class="hl kwc">y</span> <span class="hl std">= freq))</span> <span class="hl opt">+</span> <span class="hl kwd">geom_bar</span><span class="hl std">(</span><span class="hl kwc">stat</span> <span class="hl std">=</span> <span class="hl str">&quot;identity&quot;</span><span class="hl std">)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure/unnamed-chunk-4.png" title="plot of chunk unnamed-chunk-4" alt="plot of chunk unnamed-chunk-4" class="plot" /></div></div>
 
-<div class="chunk" id="unnamed-chunk-4"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">ggplot</span><span class="hl std">(</span><span class="hl kwd">transform</span><span class="hl std">(tripsByDepart,</span> <span class="hl kwc">name</span> <span class="hl std">=</span> <span class="hl kwd">reorder</span><span class="hl std">(name, normByTime)),</span> <span class="hl kwd">aes</span><span class="hl std">(</span><span class="hl kwc">x</span> <span class="hl std">= name,</span>
+<p>What about if we map them by nLoops... where are the loops taking place? (see below in the mapping section)</p>
+<div class="chunk" id="unnamed-chunk-5"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl std">loopCount2</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">count</span><span class="hl std">(trips,</span> <span class="hl kwd">.</span><span class="hl std">(from_station_id, loop))</span>
+<span class="hl std">loopCount2</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">merge</span><span class="hl std">(loopCount2, stations,</span> <span class="hl kwc">by.x</span> <span class="hl std">=</span> <span class="hl str">&quot;from_station_id&quot;</span><span class="hl std">,</span> <span class="hl kwc">by.y</span> <span class="hl std">=</span> <span class="hl str">&quot;id&quot;</span><span class="hl std">,</span>
+    <span class="hl kwc">all.x</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">)</span>
+<span class="hl std">loopCount2</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">arrange</span><span class="hl std">(loopCount2,</span> <span class="hl opt">-</span><span class="hl std">freq)</span>
+<span class="hl std">loopCount2</span><span class="hl opt">$</span><span class="hl std">norm</span> <span class="hl kwb">&lt;-</span> <span class="hl std">loopCount2</span><span class="hl opt">$</span><span class="hl std">freq</span><span class="hl opt">/</span><span class="hl kwd">max</span><span class="hl std">(loopCount2</span><span class="hl opt">$</span><span class="hl std">freq)</span>
+<span class="hl std">loopCount2Wide</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">reshape</span><span class="hl std">(loopCount2,</span> <span class="hl kwc">idvar</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;from_station_id&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;name&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;latitude&quot;</span><span class="hl std">,</span>
+    <span class="hl str">&quot;longitude&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;dpcapacity&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;landmark&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;online.date&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;daysOnline&quot;</span><span class="hl std">),</span> <span class="hl kwc">timevar</span> <span class="hl std">=</span> <span class="hl str">&quot;loop&quot;</span><span class="hl std">,</span>
+    <span class="hl kwc">direction</span> <span class="hl std">=</span> <span class="hl str">&quot;wide&quot;</span><span class="hl std">)</span>
+<span class="hl std">loopCount2Wide</span><span class="hl opt">$</span><span class="hl std">stationProbLoop</span> <span class="hl kwb">&lt;-</span> <span class="hl std">(loopCount2Wide</span><span class="hl opt">$</span><span class="hl std">freq.1</span><span class="hl opt">/</span><span class="hl std">(loopCount2Wide</span><span class="hl opt">$</span><span class="hl std">freq.1</span> <span class="hl opt">+</span>
+    <span class="hl std">loopCount2Wide</span><span class="hl opt">$</span><span class="hl std">freq.0))</span> <span class="hl opt">*</span> <span class="hl num">100</span>
+<span class="hl std">loopCount2Wide</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">arrange</span><span class="hl std">(loopCount2Wide,</span> <span class="hl opt">-</span><span class="hl std">stationProbLoop)</span>
+</pre></div>
+</div></div>
+
+
+
+<p>What about demographic differences btwn loopers</p>
+<div class="chunk" id="unnamed-chunk-6"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl std">loopersMen</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">count</span><span class="hl std">(trips,</span> <span class="hl kwd">.</span><span class="hl std">(loop, gender))</span>
+<span class="hl std">loopersMen</span><span class="hl opt">$</span><span class="hl std">gender[loopersMen</span><span class="hl opt">$</span><span class="hl std">gender</span> <span class="hl opt">!=</span> <span class="hl str">&quot;Male&quot;</span> <span class="hl opt">&amp;</span> <span class="hl std">loopersMen</span><span class="hl opt">$</span><span class="hl std">gender</span> <span class="hl opt">!=</span> <span class="hl str">&quot;Female&quot;</span><span class="hl std">]</span> <span class="hl kwb">&lt;-</span> <span class="hl str">&quot;Unknown&quot;</span>
+<span class="hl std">loopersMen</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">reshape</span><span class="hl std">(loopersMen,</span> <span class="hl kwc">idvar</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;loop&quot;</span><span class="hl std">),</span> <span class="hl kwc">timevar</span> <span class="hl std">=</span> <span class="hl str">&quot;gender&quot;</span><span class="hl std">,</span> <span class="hl kwc">direction</span> <span class="hl std">=</span> <span class="hl str">&quot;wide&quot;</span><span class="hl std">)</span>
+<span class="hl std">loopersMen</span><span class="hl opt">$</span><span class="hl std">perWomen</span> <span class="hl kwb">&lt;-</span> <span class="hl std">loopersMen</span><span class="hl opt">$</span><span class="hl std">freq.Female</span><span class="hl opt">/</span><span class="hl std">(loopersMen</span><span class="hl opt">$</span><span class="hl std">freq.Female</span> <span class="hl opt">+</span> <span class="hl std">loopersMen</span><span class="hl opt">$</span><span class="hl std">freq.Male)</span>
+<span class="hl std">loopersMen</span><span class="hl opt">$</span><span class="hl std">perMan</span> <span class="hl kwb">&lt;-</span> <span class="hl std">loopersMen</span><span class="hl opt">$</span><span class="hl std">freq.Male</span><span class="hl opt">/</span><span class="hl std">(loopersMen</span><span class="hl opt">$</span><span class="hl std">freq.Female</span> <span class="hl opt">+</span> <span class="hl std">loopersMen</span><span class="hl opt">$</span><span class="hl std">freq.Male)</span>
+<span class="hl std">loopersMen</span>
+</pre></div>
+<div class="output"><pre class="knitr r">##   loop freq.Unknown freq.Female freq.Male perWomen perMan
+## 1    0       322543       82729    312691   0.2092 0.7908
+## 4    1        34199        1721      5905   0.2257 0.7743
+</pre></div>
+</div></div>
+
+<P>There is no difference in the choice of a man or a woman for predicting a loop.
+<div class="chunk" id="unnamed-chunk-7"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl std">loopers</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">ddply</span><span class="hl std">(trips,</span> <span class="hl kwd">.</span><span class="hl std">(loop), summarize,</span> <span class="hl kwc">meanAge</span> <span class="hl std">=</span> <span class="hl kwd">mean</span><span class="hl std">(age,</span> <span class="hl kwc">na.rm</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">),</span>
+    <span class="hl kwc">sdAge</span> <span class="hl std">=</span> <span class="hl kwd">sd</span><span class="hl std">(age,</span> <span class="hl kwc">na.rm</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">),</span> <span class="hl kwc">meanTime</span> <span class="hl std">=</span> <span class="hl kwd">mean</span><span class="hl std">(tripduration,</span> <span class="hl kwc">na.rm</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">),</span>
+    <span class="hl kwc">sdTime</span> <span class="hl std">=</span> <span class="hl kwd">sd</span><span class="hl std">(tripduration,</span> <span class="hl kwc">na.rm</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">))</span>
+<span class="hl std">loopers</span>
+</pre></div>
+<div class="output"><pre class="knitr r">##   loop meanAge sdAge meanTime sdTime
+## 1    0   36.14 10.41     1150   2463
+## 2    1   36.59 11.59     2767   5614
+</pre></div>
+</div></div>
+
+<p>There is no difference in the demographics for predicting a loop trip</p>
+
+<p>Something else to consider looking at is the time differences between checkouts at each station to get an idea of the demand rate for the station at a given time</p>
+<p>First step... let's create a datapoint for the time between arrivals for a single station (practice)</p>
+<div class="chunk" id="unnamed-chunk-8"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl std">trips85</span> <span class="hl kwb">&lt;-</span> <span class="hl std">trips</span> <span class="hl opt">%.%</span> <span class="hl kwd">filter</span><span class="hl std">(to_station_id</span> <span class="hl opt">==</span> <span class="hl num">85</span><span class="hl std">)</span> <span class="hl opt">%.%</span> <span class="hl kwd">arrange</span><span class="hl std">(stoptime)</span>
+<span class="hl std">trips85</span><span class="hl opt">$</span><span class="hl std">diff</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">NA</span><span class="hl std">,</span> <span class="hl kwd">diff</span><span class="hl std">(trips85</span><span class="hl opt">$</span><span class="hl std">stoptime))</span>
+<span class="hl std">stoptimes</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">getDateComponents</span><span class="hl std">(trips85</span><span class="hl opt">$</span><span class="hl std">stoptime)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## [1] "Returns a separate dataframe that can be renamed and cbinded to input dataset"
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl kwd">colnames</span><span class="hl std">(stoptimes)</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;stopMonth&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;stopDay&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;stopDay_str&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;stopTime&quot;</span><span class="hl std">,</span>
+    <span class="hl str">&quot;stopHr&quot;</span><span class="hl std">)</span>
+<span class="hl std">starttimes</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">getDateComponents</span><span class="hl std">(trips85</span><span class="hl opt">$</span><span class="hl std">starttime)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## [1] "Returns a separate dataframe that can be renamed and cbinded to input dataset"
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl kwd">colnames</span><span class="hl std">(starttimes)</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;startMonth&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;startDay&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;startDay_str&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;startTime&quot;</span><span class="hl std">,</span>
+    <span class="hl str">&quot;startHr&quot;</span><span class="hl std">)</span>
+<span class="hl std">trips85</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">cbind</span><span class="hl std">(trips85, stoptimes, starttimes)</span>
+</pre></div>
+</div></div>
+
+
+<p>First we look at arrivals...<p>
+<div class="chunk" id="unnamed-chunk-9"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl com">## This will look at difference by time for a given day, averaging all months</span>
+<span class="hl com">## and weeks together</span>
+<span class="hl std">avgDiffStop</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">ddply</span><span class="hl std">(trips85,</span> <span class="hl kwd">.</span><span class="hl std">(stopDay_str, stopHr), summarize,</span> <span class="hl kwc">meanDif</span> <span class="hl std">=</span> <span class="hl kwd">mean</span><span class="hl std">(diff,</span>
+    <span class="hl kwc">na.rm</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">))</span>
+<span class="hl kwd">ggplot</span><span class="hl std">(avgDiffStop,</span> <span class="hl kwd">aes</span><span class="hl std">(</span><span class="hl kwc">x</span> <span class="hl std">=</span> <span class="hl kwd">as.integer</span><span class="hl std">(stopHr),</span> <span class="hl kwc">y</span> <span class="hl std">= meanDif))</span> <span class="hl opt">+</span> <span class="hl kwd">geom_line</span><span class="hl std">()</span> <span class="hl opt">+</span>
+    <span class="hl kwd">facet_wrap</span><span class="hl std">(</span><span class="hl opt">~</span><span class="hl std">stopDay_str)</span> <span class="hl opt">+</span> <span class="hl kwd">ggtitle</span><span class="hl std">(</span><span class="hl str">&quot;Latency of Bike Arrival at station 85&quot;</span><span class="hl std">)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure/unnamed-chunk-9.png" title="plot of chunk unnamed-chunk-9" alt="plot of chunk unnamed-chunk-9" class="plot" /></div></div>
+
+<p>Interesting periods of high demand in the middle of the night (represented by lower values)</p>
+
+<p>Then we look at departures...<\p>
+<div class="chunk" id="unnamed-chunk-10"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl com">## This will look at difference by time for a given day, averaging all months</span>
+<span class="hl com">## and weeks together</span>
+<span class="hl std">trips85D</span> <span class="hl kwb">&lt;-</span> <span class="hl std">trips</span> <span class="hl opt">%.%</span> <span class="hl kwd">filter</span><span class="hl std">(from_station_id</span> <span class="hl opt">==</span> <span class="hl num">85</span><span class="hl std">)</span> <span class="hl opt">%.%</span> <span class="hl kwd">arrange</span><span class="hl std">(starttime)</span>
+<span class="hl std">trips85D</span><span class="hl opt">$</span><span class="hl std">diff</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">NA</span><span class="hl std">,</span> <span class="hl kwd">diff</span><span class="hl std">(trips85D</span><span class="hl opt">$</span><span class="hl std">starttime))</span>
+<span class="hl std">starttimes</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">getDateComponents</span><span class="hl std">(trips85D</span><span class="hl opt">$</span><span class="hl std">starttime)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## [1] "Returns a separate dataframe that can be renamed and cbinded to input dataset"
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl kwd">colnames</span><span class="hl std">(starttimes)</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;startMonth&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;startDay&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;startDay_str&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;startTime&quot;</span><span class="hl std">,</span>
+    <span class="hl str">&quot;startHr&quot;</span><span class="hl std">)</span>
+<span class="hl std">trips85D</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">cbind</span><span class="hl std">(trips85D, starttimes)</span>
+<span class="hl std">avgDiffStart</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">ddply</span><span class="hl std">(trips85D,</span> <span class="hl kwd">.</span><span class="hl std">(startDay_str, startHr), summarize,</span> <span class="hl kwc">meanDif</span> <span class="hl std">=</span> <span class="hl kwd">mean</span><span class="hl std">(diff,</span>
+    <span class="hl kwc">na.rm</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">))</span>
+<span class="hl kwd">ggplot</span><span class="hl std">(avgDiffStart,</span> <span class="hl kwd">aes</span><span class="hl std">(</span><span class="hl kwc">x</span> <span class="hl std">=</span> <span class="hl kwd">as.integer</span><span class="hl std">(startHr),</span> <span class="hl kwc">y</span> <span class="hl std">= meanDif))</span> <span class="hl opt">+</span> <span class="hl kwd">geom_line</span><span class="hl std">()</span> <span class="hl opt">+</span>
+    <span class="hl kwd">facet_wrap</span><span class="hl std">(</span><span class="hl opt">~</span><span class="hl std">startDay_str)</span> <span class="hl opt">+</span> <span class="hl kwd">ggtitle</span><span class="hl std">(</span><span class="hl str">&quot;Latency of Bike Departure at station 85&quot;</span><span class="hl std">)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure/unnamed-chunk-10.png" title="plot of chunk unnamed-chunk-10" alt="plot of chunk unnamed-chunk-10" class="plot" /></div></div>
+
+<p>Similar patterns as above... now it would be cool to see them together</p>
+
+<div class="chunk" id="unnamed-chunk-11"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">colnames</span><span class="hl std">(avgDiffStop)</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;Day_str&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;Hr&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;meanDif&quot;</span><span class="hl std">)</span>
+<span class="hl std">avgDiffStop</span><span class="hl opt">$</span><span class="hl std">version</span> <span class="hl kwb">&lt;-</span> <span class="hl str">&quot;Arrival&quot;</span>
+<span class="hl kwd">colnames</span><span class="hl std">(avgDiffStart)</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;Day_str&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;Hr&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;meanDif&quot;</span><span class="hl std">)</span>
+<span class="hl std">avgDiffStart</span><span class="hl opt">$</span><span class="hl std">version</span> <span class="hl kwb">&lt;-</span> <span class="hl str">&quot;Departure&quot;</span>
+<span class="hl std">avgDiffCombo</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">rbind</span><span class="hl std">(avgDiffStop, avgDiffStart)</span>
+<span class="hl kwd">ggplot</span><span class="hl std">(avgDiffCombo,</span> <span class="hl kwd">aes</span><span class="hl std">(</span><span class="hl kwc">x</span> <span class="hl std">=</span> <span class="hl kwd">as.integer</span><span class="hl std">(Hr),</span> <span class="hl kwc">y</span> <span class="hl std">= meanDif,</span> <span class="hl kwc">color</span> <span class="hl std">= version))</span> <span class="hl opt">+</span>
+    <span class="hl kwd">geom_line</span><span class="hl std">()</span> <span class="hl opt">+</span> <span class="hl kwd">facet_wrap</span><span class="hl std">(</span><span class="hl opt">~</span><span class="hl std">Day_str)</span> <span class="hl opt">+</span> <span class="hl kwd">ggtitle</span><span class="hl std">(</span><span class="hl str">&quot;Latency of Bike Arrival and Departure&quot;</span><span class="hl std">)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure/unnamed-chunk-11.png" title="plot of chunk unnamed-chunk-11" alt="plot of chunk unnamed-chunk-11" class="plot" /></div></div>
+
+<p>Cool (maybe) informative? Not really. It appears that both timeseries follow roughly the same pattern... let's try to do some comparison though</p>
+
+<p>Need to compare diffs for each station. First, we get the diffs, based on station</p>
+<div class="chunk" id="unnamed-chunk-12"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl std">trips</span> <span class="hl kwb">&lt;-</span> <span class="hl std">trips</span> <span class="hl opt">%.%</span> <span class="hl kwd">arrange</span><span class="hl std">(to_station_id, stoptime)</span>
+
+<span class="hl std">doStopDiffsPanel</span> <span class="hl kwb">&lt;-</span> <span class="hl kwa">function</span><span class="hl std">(</span><span class="hl kwc">x</span><span class="hl std">) {</span>
+    <span class="hl std">x</span><span class="hl opt">$</span><span class="hl std">stopdiffs</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">NA</span><span class="hl std">,</span> <span class="hl kwd">diff</span><span class="hl std">(x</span><span class="hl opt">$</span><span class="hl std">stoptime))</span>
+    <span class="hl kwa">if</span> <span class="hl std">(</span><span class="hl kwd">nrow</span><span class="hl std">(x)</span> <span class="hl opt">!=</span> <span class="hl kwd">length</span><span class="hl std">(x</span><span class="hl opt">$</span><span class="hl std">stopdiffs)) {</span>
+        <span class="hl kwd">print</span><span class="hl std">(</span><span class="hl str">&quot;ERROR&quot;</span><span class="hl std">)</span>
+    <span class="hl std">}</span>
+    <span class="hl kwd">return</span><span class="hl std">(x)</span>
+<span class="hl std">}</span>
+
+<span class="hl std">doStartDiffsPanel</span> <span class="hl kwb">&lt;-</span> <span class="hl kwa">function</span><span class="hl std">(</span><span class="hl kwc">x</span><span class="hl std">) {</span>
+    <span class="hl std">x</span><span class="hl opt">$</span><span class="hl std">startdiffs</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">NA</span><span class="hl std">,</span> <span class="hl kwd">diff</span><span class="hl std">(x</span><span class="hl opt">$</span><span class="hl std">starttime))</span>
+    <span class="hl kwa">if</span> <span class="hl std">(</span><span class="hl kwd">nrow</span><span class="hl std">(x)</span> <span class="hl opt">!=</span> <span class="hl kwd">length</span><span class="hl std">(x</span><span class="hl opt">$</span><span class="hl std">startdiffs)) {</span>
+        <span class="hl kwd">print</span><span class="hl std">(</span><span class="hl str">&quot;ERROR&quot;</span><span class="hl std">)</span>
+    <span class="hl std">}</span>
+    <span class="hl kwd">return</span><span class="hl std">(x)</span>
+<span class="hl std">}</span>
+
+<span class="hl com">## Get diff by panel</span>
+<span class="hl std">trips</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">ddply</span><span class="hl std">(trips,</span> <span class="hl kwd">.</span><span class="hl std">(to_station_id), doStopDiffsPanel)</span>
+
+<span class="hl std">trips</span> <span class="hl kwb">&lt;-</span> <span class="hl std">trips</span> <span class="hl opt">%.%</span> <span class="hl kwd">arrange</span><span class="hl std">(from_station_id, starttime)</span>
+<span class="hl std">trips</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">ddply</span><span class="hl std">(trips,</span> <span class="hl kwd">.</span><span class="hl std">(from_station_id), doStartDiffsPanel)</span>
+</pre></div>
+</div></div>
+
+
+<p>Now we want to look at average diff and sd for each station, aggregating all days and times</p>
+<div class="chunk" id="unnamed-chunk-13"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl std">avgStartDiffs_all</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">ddply</span><span class="hl std">(trips,</span> <span class="hl kwd">.</span><span class="hl std">(from_station_id), summarize,</span> <span class="hl kwc">meanStartDiff</span> <span class="hl std">=</span> <span class="hl kwd">mean</span><span class="hl std">(startdiffs,</span>
+    <span class="hl kwc">na.rm</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">),</span> <span class="hl kwc">sdStartDiff</span> <span class="hl std">=</span> <span class="hl kwd">sd</span><span class="hl std">(startdiffs,</span> <span class="hl kwc">na.rm</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">))</span>
+<span class="hl std">avgStopDiffs_all</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">ddply</span><span class="hl std">(trips,</span> <span class="hl kwd">.</span><span class="hl std">(to_station_id), summarize,</span> <span class="hl kwc">meanStopDiff</span> <span class="hl std">=</span> <span class="hl kwd">mean</span><span class="hl std">(stopdiffs,</span>
+    <span class="hl kwc">na.rm</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">),</span> <span class="hl kwc">sdStopDiff</span> <span class="hl std">=</span> <span class="hl kwd">sd</span><span class="hl std">(stopdiffs,</span> <span class="hl kwc">na.rm</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">))</span>
+<span class="hl std">avgDiffs_all</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">merge</span><span class="hl std">(avgStartDiffs_all, avgStopDiffs_all,</span> <span class="hl kwc">by.x</span> <span class="hl std">=</span> <span class="hl str">&quot;from_station_id&quot;</span><span class="hl std">,</span>
+    <span class="hl kwc">by.y</span> <span class="hl std">=</span> <span class="hl str">&quot;to_station_id&quot;</span><span class="hl std">,</span> <span class="hl kwc">all</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">)</span>
+<span class="hl std">avgDiffs_all</span><span class="hl opt">$</span><span class="hl std">avgDiff</span> <span class="hl kwb">&lt;-</span> <span class="hl std">(avgDiffs_all</span><span class="hl opt">$</span><span class="hl std">meanStartDiff</span> <span class="hl opt">+</span> <span class="hl std">avgDiffs_all</span><span class="hl opt">$</span><span class="hl std">meanStopDiff)</span><span class="hl opt">/</span><span class="hl num">2</span>
+<span class="hl std">avgDiffs_all</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">merge</span><span class="hl std">(stations, avgDiffs_all,</span> <span class="hl kwc">by.x</span> <span class="hl std">=</span> <span class="hl str">&quot;id&quot;</span><span class="hl std">,</span> <span class="hl kwc">by.y</span> <span class="hl std">=</span> <span class="hl str">&quot;from_station_id&quot;</span><span class="hl std">,</span>
+    <span class="hl kwc">all</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">)</span>
+
+<span class="hl std">avgDiffs_all</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">arrange</span><span class="hl std">(avgDiffs_all, avgDiff)</span>
+
+<span class="hl std">avgDiffs_all[</span><span class="hl num">1</span><span class="hl opt">:</span><span class="hl num">10</span><span class="hl std">,</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">2</span><span class="hl std">,</span> <span class="hl num">5</span><span class="hl std">,</span> <span class="hl num">6</span><span class="hl std">,</span> <span class="hl num">9</span><span class="hl opt">:</span><span class="hl num">13</span><span class="hl std">)]</span>
+</pre></div>
+<div class="output"><pre class="knitr r">##                            name dpcapacity landmark meanStartDiff
+## 1     Streeter Dr & Illinois St         35       22         764.7
+## 2               Millennium Park         35        8         935.4
+## 3     Lake Shore Dr & Monroe St         11      300        1020.0
+## 4  Clinton St & Washington Blvd         31       10        1083.7
+## 5         Michigan Ave & Oak St         15       42        1218.4
+## 6                 Museum Campus         19       29        1262.3
+## 7           Theater on the Lake         15      350        1320.2
+## 8      McClurg Ct & Illinois St         23       51        1485.1
+## 9        Michigan Ave & Lake St         23       43        1501.7
+## 10      Canal St & Jackson Blvd         35      138        1588.6
+##    sdStartDiff meanStopDiff sdStopDiff avgDiff
+## 1         5204        688.4       4895   726.5
+## 2         4144        879.0       3559   907.2
+## 3         5866       1028.8       6294  1024.4
+## 4         4874       1161.5       4546  1122.6
+## 5         4600       1127.2       4018  1172.8
+## 6         5903       1184.2       5513  1223.3
+## 7         6458       1263.4       6730  1291.8
+## 8         4539       1396.2       4473  1440.7
+## 9         5032       1542.4       4812  1522.0
+## 10        5214       1598.5       5105  1593.5
+</pre></div>
+</div></div>
+
+
+
+<div class="chunk" id="unnamed-chunk-14"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">ggplot</span><span class="hl std">(</span><span class="hl kwd">transform</span><span class="hl std">(tripsByDepart,</span> <span class="hl kwc">name</span> <span class="hl std">=</span> <span class="hl kwd">reorder</span><span class="hl std">(name, normByTime)),</span> <span class="hl kwd">aes</span><span class="hl std">(</span><span class="hl kwc">x</span> <span class="hl std">= name,</span>
     <span class="hl kwc">y</span> <span class="hl std">= normByTime))</span> <span class="hl opt">+</span> <span class="hl kwd">geom_bar</span><span class="hl std">(</span><span class="hl kwc">stat</span> <span class="hl std">=</span> <span class="hl str">&quot;identity&quot;</span><span class="hl std">)</span> <span class="hl opt">+</span> <span class="hl kwd">coord_flip</span><span class="hl std">()</span>
 </pre></div>
 <div class="warning"><pre class="knitr r">## Warning: position_stack requires constant width: output may be incorrect
 </pre></div>
-</div><div class="rimage default"><img src="figure/unnamed-chunk-4.png" title="plot of chunk unnamed-chunk-4" alt="plot of chunk unnamed-chunk-4" class="plot" /></div></div>
+</div><div class="rimage default"><img src="figure/unnamed-chunk-14.png" title="plot of chunk unnamed-chunk-14" alt="plot of chunk unnamed-chunk-14" class="plot" /></div></div>
 
 
 
+<h1>Maps</h1>
 <p>Let's map some shit... Reading in the data. To map the data provided by Divvy, we need to convert the lat long to tmerc projection matching the city gis data using the sp library</p>
 <div class="chunk" id="Read in Map Layers"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl std">city</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">makeLatLong</span><span class="hl std">(</span><span class="hl str">&quot;City_Boundary&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;City_Boundary&quot;</span><span class="hl std">)</span>
 </pre></div>
@@ -202,54 +422,121 @@
 </pre></div>
 <div class="source"><pre class="knitr r"><span class="hl std">neighbCols</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">brewer.pal</span><span class="hl std">(</span><span class="hl num">7</span><span class="hl std">,</span> <span class="hl str">&quot;Set3&quot;</span><span class="hl std">)</span>
 <span class="hl std">neighbCols</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">rep</span><span class="hl std">(</span><span class="hl kwd">rbind</span><span class="hl std">(neighbCols),</span> <span class="hl num">14</span><span class="hl std">)</span>
-<span class="hl com">## majorSt &lt;- makeLatLong('Major_Streets','Major_Streets')</span>
+<span class="hl std">water</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">makeLatLong</span><span class="hl std">(</span><span class="hl str">&quot;Waterways&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;Hydro&quot;</span><span class="hl std">)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## OGR data source with driver: ESRI Shapefile 
+## Source: "Waterways", layer: "Hydro"
+## with 605 features and 6 fields
+## Feature type: wkbPolygon with 2 dimensions
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl com">## majorSt &lt;- makeLatLong('Major_Streets','Major_Streets')</span>
 </pre></div>
 </div></div>
 
 
 <p>Map Showing Bike Routes and Divvy Stations:</p>
 
-<div class="chunk" id="unnamed-chunk-5"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">plot</span><span class="hl std">(city,</span> <span class="hl kwc">xlim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl opt">-</span><span class="hl num">87.70786</span><span class="hl std">,</span> <span class="hl opt">-</span><span class="hl num">87.58071</span><span class="hl std">),</span> <span class="hl kwc">ylim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">41.78875</span><span class="hl std">,</span> <span class="hl num">41.97835</span><span class="hl std">))</span>
+<div class="chunk" id="unnamed-chunk-15"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">plot</span><span class="hl std">(city,</span> <span class="hl kwc">xlim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl opt">-</span><span class="hl num">87.70786</span><span class="hl std">,</span> <span class="hl opt">-</span><span class="hl num">87.58071</span><span class="hl std">),</span> <span class="hl kwc">ylim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">41.78875</span><span class="hl std">,</span> <span class="hl num">41.97835</span><span class="hl std">))</span>
 <span class="hl com">## plot(wards,add=TRUE)</span>
 <span class="hl kwd">plot</span><span class="hl std">(bikeRt,</span> <span class="hl kwc">add</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">)</span>
 <span class="hl kwd">plot</span><span class="hl std">(stationMap,</span> <span class="hl kwc">add</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">pch</span> <span class="hl std">=</span> <span class="hl num">20</span><span class="hl std">)</span>
+<span class="hl kwd">plot</span><span class="hl std">(water,</span> <span class="hl kwc">add</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">col</span> <span class="hl std">=</span> <span class="hl str">&quot;Blue&quot;</span><span class="hl std">,</span> <span class="hl kwc">border</span> <span class="hl std">=</span> <span class="hl str">&quot;blue&quot;</span><span class="hl std">)</span>
+<span class="hl kwd">points</span><span class="hl std">(refPoints</span><span class="hl opt">$</span><span class="hl std">longitude,</span> <span class="hl kwc">y</span> <span class="hl std">= refPoints</span><span class="hl opt">$</span><span class="hl std">latitude,</span> <span class="hl kwc">pch</span> <span class="hl std">=</span> <span class="hl num">20</span><span class="hl std">,</span> <span class="hl kwc">cex</span> <span class="hl std">=</span> <span class="hl num">1</span><span class="hl std">,</span> <span class="hl kwc">col</span> <span class="hl std">=</span> <span class="hl str">&quot;red&quot;</span><span class="hl std">)</span>
+<span class="hl kwd">text</span><span class="hl std">(refPoints</span><span class="hl opt">$</span><span class="hl std">longitude</span> <span class="hl opt">+</span> <span class="hl num">0.01</span><span class="hl std">,</span> <span class="hl kwc">y</span> <span class="hl std">= refPoints</span><span class="hl opt">$</span><span class="hl std">latitude</span> <span class="hl opt">+</span> <span class="hl num">0.005</span><span class="hl std">,</span> <span class="hl kwc">labels</span> <span class="hl std">= refPoints</span><span class="hl opt">$</span><span class="hl std">Location,</span>
+    <span class="hl kwc">cex</span> <span class="hl std">=</span> <span class="hl num">0.5</span><span class="hl std">)</span>
 </pre></div>
-</div><div class="rimage default"><img src="figure/unnamed-chunk-5.png" title="plot of chunk unnamed-chunk-5" alt="plot of chunk unnamed-chunk-5" class="plot" /></div></div>
+</div><div class="rimage default"><img src="figure/unnamed-chunk-15.png" title="plot of chunk unnamed-chunk-15" alt="plot of chunk unnamed-chunk-15" class="plot" /></div></div>
 
 
 <p>Map showing ward and Divvy Stations:</p>
-<div class="chunk" id="unnamed-chunk-6"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">plot</span><span class="hl std">(city,</span> <span class="hl kwc">xlim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl opt">-</span><span class="hl num">87.70786</span><span class="hl std">,</span> <span class="hl opt">-</span><span class="hl num">87.58071</span><span class="hl std">),</span> <span class="hl kwc">ylim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">41.78875</span><span class="hl std">,</span> <span class="hl num">41.97835</span><span class="hl std">))</span>
+<div class="chunk" id="unnamed-chunk-16"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">plot</span><span class="hl std">(city,</span> <span class="hl kwc">xlim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl opt">-</span><span class="hl num">87.70786</span><span class="hl std">,</span> <span class="hl opt">-</span><span class="hl num">87.58071</span><span class="hl std">),</span> <span class="hl kwc">ylim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">41.78875</span><span class="hl std">,</span> <span class="hl num">41.97835</span><span class="hl std">))</span>
 <span class="hl kwd">plot</span><span class="hl std">(wards,</span> <span class="hl kwc">add</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">)</span>
 <span class="hl kwd">plot</span><span class="hl std">(stationMap,</span> <span class="hl kwc">add</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">pch</span> <span class="hl std">=</span> <span class="hl num">20</span><span class="hl std">)</span>
+<span class="hl kwd">plot</span><span class="hl std">(water,</span> <span class="hl kwc">add</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">col</span> <span class="hl std">=</span> <span class="hl str">&quot;Blue&quot;</span><span class="hl std">,</span> <span class="hl kwc">border</span> <span class="hl std">=</span> <span class="hl str">&quot;blue&quot;</span><span class="hl std">)</span>
+<span class="hl kwd">points</span><span class="hl std">(refPoints</span><span class="hl opt">$</span><span class="hl std">longitude,</span> <span class="hl kwc">y</span> <span class="hl std">= refPoints</span><span class="hl opt">$</span><span class="hl std">latitude,</span> <span class="hl kwc">pch</span> <span class="hl std">=</span> <span class="hl num">20</span><span class="hl std">,</span> <span class="hl kwc">cex</span> <span class="hl std">=</span> <span class="hl num">1</span><span class="hl std">,</span> <span class="hl kwc">col</span> <span class="hl std">=</span> <span class="hl str">&quot;red&quot;</span><span class="hl std">)</span>
+<span class="hl kwd">text</span><span class="hl std">(refPoints</span><span class="hl opt">$</span><span class="hl std">longitude</span> <span class="hl opt">+</span> <span class="hl num">0.01</span><span class="hl std">,</span> <span class="hl kwc">y</span> <span class="hl std">= refPoints</span><span class="hl opt">$</span><span class="hl std">latitude</span> <span class="hl opt">+</span> <span class="hl num">0.005</span><span class="hl std">,</span> <span class="hl kwc">labels</span> <span class="hl std">= refPoints</span><span class="hl opt">$</span><span class="hl std">Location,</span>
+    <span class="hl kwc">cex</span> <span class="hl std">=</span> <span class="hl num">0.5</span><span class="hl std">)</span>
 </pre></div>
-</div><div class="rimage default"><img src="figure/unnamed-chunk-6.png" title="plot of chunk unnamed-chunk-6" alt="plot of chunk unnamed-chunk-6" class="plot" /></div></div>
+</div><div class="rimage default"><img src="figure/unnamed-chunk-16.png" title="plot of chunk unnamed-chunk-16" alt="plot of chunk unnamed-chunk-16" class="plot" /></div></div>
 
 
 <p>Map showing police and Divvy Stations:</p>
-<div class="chunk" id="unnamed-chunk-7"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">plot</span><span class="hl std">(city,</span> <span class="hl kwc">xlim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl opt">-</span><span class="hl num">87.70786</span><span class="hl std">,</span> <span class="hl opt">-</span><span class="hl num">87.58071</span><span class="hl std">),</span> <span class="hl kwc">ylim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">41.78875</span><span class="hl std">,</span> <span class="hl num">41.97835</span><span class="hl std">))</span>
+<div class="chunk" id="unnamed-chunk-17"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">plot</span><span class="hl std">(city,</span> <span class="hl kwc">xlim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl opt">-</span><span class="hl num">87.70786</span><span class="hl std">,</span> <span class="hl opt">-</span><span class="hl num">87.58071</span><span class="hl std">),</span> <span class="hl kwc">ylim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">41.78875</span><span class="hl std">,</span> <span class="hl num">41.97835</span><span class="hl std">))</span>
 <span class="hl kwd">plot</span><span class="hl std">(cops,</span> <span class="hl kwc">add</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">)</span>
 <span class="hl kwd">plot</span><span class="hl std">(stationMap,</span> <span class="hl kwc">add</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">pch</span> <span class="hl std">=</span> <span class="hl num">20</span><span class="hl std">)</span>
+<span class="hl kwd">plot</span><span class="hl std">(water,</span> <span class="hl kwc">add</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">col</span> <span class="hl std">=</span> <span class="hl str">&quot;Blue&quot;</span><span class="hl std">,</span> <span class="hl kwc">border</span> <span class="hl std">=</span> <span class="hl str">&quot;blue&quot;</span><span class="hl std">)</span>
+<span class="hl kwd">points</span><span class="hl std">(refPoints</span><span class="hl opt">$</span><span class="hl std">longitude,</span> <span class="hl kwc">y</span> <span class="hl std">= refPoints</span><span class="hl opt">$</span><span class="hl std">latitude,</span> <span class="hl kwc">pch</span> <span class="hl std">=</span> <span class="hl num">20</span><span class="hl std">,</span> <span class="hl kwc">cex</span> <span class="hl std">=</span> <span class="hl num">1</span><span class="hl std">,</span> <span class="hl kwc">col</span> <span class="hl std">=</span> <span class="hl str">&quot;red&quot;</span><span class="hl std">)</span>
+<span class="hl kwd">text</span><span class="hl std">(refPoints</span><span class="hl opt">$</span><span class="hl std">longitude</span> <span class="hl opt">+</span> <span class="hl num">0.01</span><span class="hl std">,</span> <span class="hl kwc">y</span> <span class="hl std">= refPoints</span><span class="hl opt">$</span><span class="hl std">latitude</span> <span class="hl opt">+</span> <span class="hl num">0.005</span><span class="hl std">,</span> <span class="hl kwc">labels</span> <span class="hl std">= refPoints</span><span class="hl opt">$</span><span class="hl std">Location,</span>
+    <span class="hl kwc">cex</span> <span class="hl std">=</span> <span class="hl num">0.5</span><span class="hl std">)</span>
 </pre></div>
-</div><div class="rimage default"><img src="figure/unnamed-chunk-7.png" title="plot of chunk unnamed-chunk-7" alt="plot of chunk unnamed-chunk-7" class="plot" /></div></div>
+</div><div class="rimage default"><img src="figure/unnamed-chunk-17.png" title="plot of chunk unnamed-chunk-17" alt="plot of chunk unnamed-chunk-17" class="plot" /></div></div>
 
 
 <p>Map showing business district and Divvy Stations:</p>
-<div class="chunk" id="unnamed-chunk-8"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">plot</span><span class="hl std">(city,</span> <span class="hl kwc">xlim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl opt">-</span><span class="hl num">87.70786</span><span class="hl std">,</span> <span class="hl opt">-</span><span class="hl num">87.58071</span><span class="hl std">),</span> <span class="hl kwc">ylim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">41.78875</span><span class="hl std">,</span> <span class="hl num">41.97835</span><span class="hl std">))</span>
+<div class="chunk" id="unnamed-chunk-18"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">plot</span><span class="hl std">(city,</span> <span class="hl kwc">xlim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl opt">-</span><span class="hl num">87.70786</span><span class="hl std">,</span> <span class="hl opt">-</span><span class="hl num">87.58071</span><span class="hl std">),</span> <span class="hl kwc">ylim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">41.78875</span><span class="hl std">,</span> <span class="hl num">41.97835</span><span class="hl std">))</span>
 <span class="hl kwd">plot</span><span class="hl std">(neighborhoods,</span> <span class="hl kwc">add</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">col</span> <span class="hl std">= neighbCols)</span>
 <span class="hl kwd">plot</span><span class="hl std">(businessDist,</span> <span class="hl kwc">add</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">)</span>
+<span class="hl kwd">plot</span><span class="hl std">(water,</span> <span class="hl kwc">add</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">col</span> <span class="hl std">=</span> <span class="hl str">&quot;Blue&quot;</span><span class="hl std">,</span> <span class="hl kwc">border</span> <span class="hl std">=</span> <span class="hl str">&quot;blue&quot;</span><span class="hl std">)</span>
 <span class="hl kwd">plot</span><span class="hl std">(stationMap,</span> <span class="hl kwc">add</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">pch</span> <span class="hl std">=</span> <span class="hl num">20</span><span class="hl std">)</span>
+<span class="hl kwd">points</span><span class="hl std">(refPoints</span><span class="hl opt">$</span><span class="hl std">longitude,</span> <span class="hl kwc">y</span> <span class="hl std">= refPoints</span><span class="hl opt">$</span><span class="hl std">latitude,</span> <span class="hl kwc">pch</span> <span class="hl std">=</span> <span class="hl num">20</span><span class="hl std">,</span> <span class="hl kwc">cex</span> <span class="hl std">=</span> <span class="hl num">1</span><span class="hl std">,</span> <span class="hl kwc">col</span> <span class="hl std">=</span> <span class="hl str">&quot;red&quot;</span><span class="hl std">)</span>
+<span class="hl kwd">text</span><span class="hl std">(refPoints</span><span class="hl opt">$</span><span class="hl std">longitude</span> <span class="hl opt">+</span> <span class="hl num">0.01</span><span class="hl std">,</span> <span class="hl kwc">y</span> <span class="hl std">= refPoints</span><span class="hl opt">$</span><span class="hl std">latitude</span> <span class="hl opt">+</span> <span class="hl num">0.005</span><span class="hl std">,</span> <span class="hl kwc">labels</span> <span class="hl std">= refPoints</span><span class="hl opt">$</span><span class="hl std">Location,</span>
+    <span class="hl kwc">cex</span> <span class="hl std">=</span> <span class="hl num">0.5</span><span class="hl std">)</span>
 </pre></div>
-</div><div class="rimage default"><img src="figure/unnamed-chunk-8.png" title="plot of chunk unnamed-chunk-8" alt="plot of chunk unnamed-chunk-8" class="plot" /></div></div>
+</div><div class="rimage default"><img src="figure/unnamed-chunk-18.png" title="plot of chunk unnamed-chunk-18" alt="plot of chunk unnamed-chunk-18" class="plot" /></div></div>
 
 
 
 <p>Map showing neighborhoods, normalized pickups by Divvy Stations:</p>
-<div class="chunk" id="unnamed-chunk-9"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">plot</span><span class="hl std">(city,</span> <span class="hl kwc">xlim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl opt">-</span><span class="hl num">87.70786</span><span class="hl std">,</span> <span class="hl opt">-</span><span class="hl num">87.58071</span><span class="hl std">),</span> <span class="hl kwc">ylim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">41.78875</span><span class="hl std">,</span> <span class="hl num">41.97835</span><span class="hl std">))</span>
+<div class="chunk" id="unnamed-chunk-19"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">plot</span><span class="hl std">(city,</span> <span class="hl kwc">xlim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl opt">-</span><span class="hl num">87.70786</span><span class="hl std">,</span> <span class="hl opt">-</span><span class="hl num">87.58071</span><span class="hl std">),</span> <span class="hl kwc">ylim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">41.78875</span><span class="hl std">,</span> <span class="hl num">41.97835</span><span class="hl std">))</span>
 <span class="hl kwd">plot</span><span class="hl std">(neighborhoods,</span> <span class="hl kwc">add</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">col</span> <span class="hl std">= neighbCols)</span>
+<span class="hl kwd">plot</span><span class="hl std">(water,</span> <span class="hl kwc">add</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">col</span> <span class="hl std">=</span> <span class="hl str">&quot;Blue&quot;</span><span class="hl std">,</span> <span class="hl kwc">border</span> <span class="hl std">=</span> <span class="hl str">&quot;blue&quot;</span><span class="hl std">)</span>
 <span class="hl kwd">points</span><span class="hl std">(tripsByDepart</span><span class="hl opt">$</span><span class="hl std">longitude, tripsByDepart</span><span class="hl opt">$</span><span class="hl std">latitude,</span> <span class="hl kwc">pch</span> <span class="hl std">=</span> <span class="hl num">20</span><span class="hl std">,</span> <span class="hl kwc">cex</span> <span class="hl std">= (tripsByDepart</span><span class="hl opt">$</span><span class="hl std">normByTime_norm)</span> <span class="hl opt">*</span>
     <span class="hl num">5</span><span class="hl std">)</span>
+<span class="hl kwd">points</span><span class="hl std">(refPoints</span><span class="hl opt">$</span><span class="hl std">longitude,</span> <span class="hl kwc">y</span> <span class="hl std">= refPoints</span><span class="hl opt">$</span><span class="hl std">latitude,</span> <span class="hl kwc">pch</span> <span class="hl std">=</span> <span class="hl num">20</span><span class="hl std">,</span> <span class="hl kwc">cex</span> <span class="hl std">=</span> <span class="hl num">1</span><span class="hl std">,</span> <span class="hl kwc">col</span> <span class="hl std">=</span> <span class="hl str">&quot;red&quot;</span><span class="hl std">)</span>
+<span class="hl kwd">text</span><span class="hl std">(refPoints</span><span class="hl opt">$</span><span class="hl std">longitude</span> <span class="hl opt">+</span> <span class="hl num">0.01</span><span class="hl std">,</span> <span class="hl kwc">y</span> <span class="hl std">= refPoints</span><span class="hl opt">$</span><span class="hl std">latitude</span> <span class="hl opt">+</span> <span class="hl num">0.005</span><span class="hl std">,</span> <span class="hl kwc">labels</span> <span class="hl std">= refPoints</span><span class="hl opt">$</span><span class="hl std">Location,</span>
+    <span class="hl kwc">cex</span> <span class="hl std">=</span> <span class="hl num">0.5</span><span class="hl std">)</span>
 </pre></div>
-</div><div class="rimage default"><img src="figure/unnamed-chunk-9.png" title="plot of chunk unnamed-chunk-9" alt="plot of chunk unnamed-chunk-9" class="plot" /></div></div>
+</div><div class="rimage default"><img src="figure/unnamed-chunk-19.png" title="plot of chunk unnamed-chunk-19" alt="plot of chunk unnamed-chunk-19" class="plot" /></div></div>
+
+
+<p>Here we look at the total number of looped trips
+<div class="chunk" id="unnamed-chunk-20"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">plot</span><span class="hl std">(city,</span> <span class="hl kwc">xlim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl opt">-</span><span class="hl num">87.70786</span><span class="hl std">,</span> <span class="hl opt">-</span><span class="hl num">87.58071</span><span class="hl std">),</span> <span class="hl kwc">ylim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">41.78875</span><span class="hl std">,</span> <span class="hl num">41.97835</span><span class="hl std">))</span>
+<span class="hl kwd">plot</span><span class="hl std">(neighborhoods,</span> <span class="hl kwc">add</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">col</span> <span class="hl std">= neighbCols)</span>
+<span class="hl kwd">plot</span><span class="hl std">(water,</span> <span class="hl kwc">add</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">col</span> <span class="hl std">=</span> <span class="hl str">&quot;Blue&quot;</span><span class="hl std">,</span> <span class="hl kwc">border</span> <span class="hl std">=</span> <span class="hl str">&quot;blue&quot;</span><span class="hl std">)</span>
+<span class="hl kwd">points</span><span class="hl std">(loopCount2</span><span class="hl opt">$</span><span class="hl std">longitude, loopCount2</span><span class="hl opt">$</span><span class="hl std">latitude,</span> <span class="hl kwc">pch</span> <span class="hl std">=</span> <span class="hl num">20</span><span class="hl std">,</span> <span class="hl kwc">cex</span> <span class="hl std">= (loopCount2</span><span class="hl opt">$</span><span class="hl std">norm)</span> <span class="hl opt">*</span>
+    <span class="hl num">3</span><span class="hl std">)</span>
+<span class="hl kwd">points</span><span class="hl std">(refPoints</span><span class="hl opt">$</span><span class="hl std">longitude,</span> <span class="hl kwc">y</span> <span class="hl std">= refPoints</span><span class="hl opt">$</span><span class="hl std">latitude,</span> <span class="hl kwc">pch</span> <span class="hl std">=</span> <span class="hl num">20</span><span class="hl std">,</span> <span class="hl kwc">cex</span> <span class="hl std">=</span> <span class="hl num">1</span><span class="hl std">,</span> <span class="hl kwc">col</span> <span class="hl std">=</span> <span class="hl str">&quot;red&quot;</span><span class="hl std">)</span>
+<span class="hl kwd">text</span><span class="hl std">(refPoints</span><span class="hl opt">$</span><span class="hl std">longitude</span> <span class="hl opt">+</span> <span class="hl num">0.01</span><span class="hl std">,</span> <span class="hl kwc">y</span> <span class="hl std">= refPoints</span><span class="hl opt">$</span><span class="hl std">latitude</span> <span class="hl opt">+</span> <span class="hl num">0.005</span><span class="hl std">,</span> <span class="hl kwc">labels</span> <span class="hl std">= refPoints</span><span class="hl opt">$</span><span class="hl std">Location,</span>
+    <span class="hl kwc">cex</span> <span class="hl std">=</span> <span class="hl num">0.5</span><span class="hl std">)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure/unnamed-chunk-20.png" title="plot of chunk unnamed-chunk-20" alt="plot of chunk unnamed-chunk-20" class="plot" /></div></div>
+
+
+<p>Here we look at the total percentage of looped trips</p>
+<div class="chunk" id="unnamed-chunk-21"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">plot</span><span class="hl std">(city,</span> <span class="hl kwc">xlim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl opt">-</span><span class="hl num">87.70786</span><span class="hl std">,</span> <span class="hl opt">-</span><span class="hl num">87.58071</span><span class="hl std">),</span> <span class="hl kwc">ylim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">41.78875</span><span class="hl std">,</span> <span class="hl num">41.97835</span><span class="hl std">))</span>
+<span class="hl kwd">plot</span><span class="hl std">(neighborhoods,</span> <span class="hl kwc">add</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">col</span> <span class="hl std">= neighbCols)</span>
+<span class="hl kwd">points</span><span class="hl std">(loopCount2Wide</span><span class="hl opt">$</span><span class="hl std">longitude, loopCount2Wide</span><span class="hl opt">$</span><span class="hl std">latitude,</span> <span class="hl kwc">pch</span> <span class="hl std">=</span> <span class="hl num">20</span><span class="hl std">,</span> <span class="hl kwc">cex</span> <span class="hl std">= (loopCount2Wide</span><span class="hl opt">$</span><span class="hl std">stationProbLoop</span><span class="hl opt">/</span><span class="hl num">100</span><span class="hl std">)</span> <span class="hl opt">*</span>
+    <span class="hl num">10</span><span class="hl std">)</span>
+<span class="hl kwd">points</span><span class="hl std">(refPoints</span><span class="hl opt">$</span><span class="hl std">longitude,</span> <span class="hl kwc">y</span> <span class="hl std">= refPoints</span><span class="hl opt">$</span><span class="hl std">latitude,</span> <span class="hl kwc">pch</span> <span class="hl std">=</span> <span class="hl num">20</span><span class="hl std">,</span> <span class="hl kwc">cex</span> <span class="hl std">=</span> <span class="hl num">1</span><span class="hl std">,</span> <span class="hl kwc">col</span> <span class="hl std">=</span> <span class="hl str">&quot;red&quot;</span><span class="hl std">)</span>
+<span class="hl kwd">text</span><span class="hl std">(refPoints</span><span class="hl opt">$</span><span class="hl std">longitude</span> <span class="hl opt">+</span> <span class="hl num">0.01</span><span class="hl std">,</span> <span class="hl kwc">y</span> <span class="hl std">= refPoints</span><span class="hl opt">$</span><span class="hl std">latitude</span> <span class="hl opt">+</span> <span class="hl num">0.005</span><span class="hl std">,</span> <span class="hl kwc">labels</span> <span class="hl std">= refPoints</span><span class="hl opt">$</span><span class="hl std">Location,</span>
+    <span class="hl kwc">cex</span> <span class="hl std">=</span> <span class="hl num">0.5</span><span class="hl std">)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure/unnamed-chunk-21.png" title="plot of chunk unnamed-chunk-21" alt="plot of chunk unnamed-chunk-21" class="plot" /></div></div>
+
+<p>Interesting insight - While they may not represent the most trips, the highest percentage of looped trips are the bike stations on the periphery, suggesting that people are just getting the bike for a trip away from other Divvy stations and then bringing it back.</p>
+
+<p>Let's take a look at the highest velocity stations</p>
+<div class="chunk" id="unnamed-chunk-22"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">plot</span><span class="hl std">(city,</span> <span class="hl kwc">xlim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl opt">-</span><span class="hl num">87.70786</span><span class="hl std">,</span> <span class="hl opt">-</span><span class="hl num">87.58071</span><span class="hl std">),</span> <span class="hl kwc">ylim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">41.78875</span><span class="hl std">,</span> <span class="hl num">41.97835</span><span class="hl std">))</span>
+<span class="hl kwd">plot</span><span class="hl std">(neighborhoods,</span> <span class="hl kwc">add</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">col</span> <span class="hl std">= neighbCols)</span>
+<span class="hl kwd">plot</span><span class="hl std">(water,</span> <span class="hl kwc">add</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">col</span> <span class="hl std">=</span> <span class="hl str">&quot;Blue&quot;</span><span class="hl std">,</span> <span class="hl kwc">border</span> <span class="hl std">=</span> <span class="hl str">&quot;blue&quot;</span><span class="hl std">)</span>
+<span class="hl kwd">points</span><span class="hl std">(avgDiffs_all</span><span class="hl opt">$</span><span class="hl std">longitude, avgDiffs_all</span><span class="hl opt">$</span><span class="hl std">latitude,</span> <span class="hl kwc">pch</span> <span class="hl std">=</span> <span class="hl num">20</span><span class="hl std">,</span> <span class="hl kwc">cex</span> <span class="hl std">= ((</span><span class="hl num">1</span><span class="hl opt">/</span><span class="hl std">avgDiffs_all</span><span class="hl opt">$</span><span class="hl std">avgDiff)</span> <span class="hl opt">*</span>
+    <span class="hl num">1000</span><span class="hl std">)</span> <span class="hl opt">*</span> <span class="hl num">2</span><span class="hl std">)</span>
+<span class="hl kwd">points</span><span class="hl std">(refPoints</span><span class="hl opt">$</span><span class="hl std">longitude,</span> <span class="hl kwc">y</span> <span class="hl std">= refPoints</span><span class="hl opt">$</span><span class="hl std">latitude,</span> <span class="hl kwc">pch</span> <span class="hl std">=</span> <span class="hl num">20</span><span class="hl std">,</span> <span class="hl kwc">cex</span> <span class="hl std">=</span> <span class="hl num">1</span><span class="hl std">,</span> <span class="hl kwc">col</span> <span class="hl std">=</span> <span class="hl str">&quot;red&quot;</span><span class="hl std">)</span>
+<span class="hl kwd">text</span><span class="hl std">(refPoints</span><span class="hl opt">$</span><span class="hl std">longitude</span> <span class="hl opt">+</span> <span class="hl num">0.01</span><span class="hl std">,</span> <span class="hl kwc">y</span> <span class="hl std">= refPoints</span><span class="hl opt">$</span><span class="hl std">latitude</span> <span class="hl opt">+</span> <span class="hl num">0.005</span><span class="hl std">,</span> <span class="hl kwc">labels</span> <span class="hl std">= refPoints</span><span class="hl opt">$</span><span class="hl std">Location,</span>
+    <span class="hl kwc">cex</span> <span class="hl std">=</span> <span class="hl num">0.5</span><span class="hl std">)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure/unnamed-chunk-22.png" title="plot of chunk unnamed-chunk-22" alt="plot of chunk unnamed-chunk-22" class="plot" /></div></div>
+
 
 
 </body>

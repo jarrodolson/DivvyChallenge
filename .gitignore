@@ -1,0 +1,7 @@
+*.RData
+*.Rproj
+//Major_Streets
+Business_Licenses_-_Current_Active_-_Map.csv
+Crimes_-_Map.csv
+Divvy_Trips_2013.csv
+.Rproj.user
