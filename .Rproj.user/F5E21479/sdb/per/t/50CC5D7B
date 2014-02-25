@@ -1,0 +1,22 @@
+{
+    "contents" : "",
+    "created" : 1393305826486.000,
+    "dirty" : false,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "50CC5D7B",
+    "lastKnownWriteTime" : 7741240722073845761,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "caption" : "nCrimes",
+        "contentUrl" : "content?title=nCrimes&file=65d7c959df1b43fa956cbcc1c4c21bb3.htm",
+        "displayedObservations" : 709,
+        "displayedVariables" : 3,
+        "totalObservations" : 709,
+        "variables" : 3
+    },
+    "source_on_save" : false,
+    "type" : "r_dataframe"
+}

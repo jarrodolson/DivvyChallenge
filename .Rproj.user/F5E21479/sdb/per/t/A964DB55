@@ -1,0 +1,22 @@
+{
+    "contents" : "",
+    "created" : 1393305334483.000,
+    "dirty" : false,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "A964DB55",
+    "lastKnownWriteTime" : 7741240722073845761,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "caption" : "crimes",
+        "contentUrl" : "content?title=crimes&file=443112a47b2d4ec6a119b5012f46a34a.htm",
+        "displayedObservations" : 1000,
+        "displayedVariables" : 22,
+        "totalObservations" : 304334,
+        "variables" : 22
+    },
+    "source_on_save" : false,
+    "type" : "r_dataframe"
+}
