@@ -1,0 +1,22 @@
+{
+    "contents" : "",
+    "created" : 1393308223781.000,
+    "dirty" : false,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "97E2C966",
+    "lastKnownWriteTime" : 7741240722073845761,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "caption" : "nBLic",
+        "contentUrl" : "content?title=nBLic&file=b099e61b950944508f50142a19cab3a2.htm",
+        "displayedObservations" : 667,
+        "displayedVariables" : 66,
+        "totalObservations" : 667,
+        "variables" : 65
+    },
+    "source_on_save" : false,
+    "type" : "r_dataframe"
+}

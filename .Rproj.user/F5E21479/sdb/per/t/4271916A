@@ -1,0 +1,17 @@
+{
+    "contents" : "##Testing out GIS functions\nlibrary(rgeos)\nlibrary(plyr)\nlibrary(ggplot2)\nbLic <- read.csv(\"Business_Licenses_-_Current_Active_-_Map.csv\",header=TRUE,stringsAsFactors=FALSE)\nbLicKey <- read.csv(\"BusinessLicenseKey.csv\",header=TRUE,stringsAsFactors=FALSE)[c(\"LICENSE.DESCRIPTION\",\"LICENSE.TYPE\")]\nbLic <- merge(bLic,bLicKey,by=\"LICENSE.DESCRIPTION\",all.x=TRUE)\nbLic$LATITUDE <- round(bLic$LATITUDE,digits=2)\nbLic$LONGITUDE <- round(bLic$LONGITUDE,digits=2)\nnBLic <- count(bLic,.(LATITUDE,LONGITUDE,LICENSE.TYPE))\nnBLic <- rename(nBLic, c(\"freq\"=\"licFreq\"))\nnBLic <- reshape(nBLic,idvar=c(\"LATITUDE\",\"LONGITUDE\"),timevar=\"LICENSE.TYPE\",direction=\"wide\")\nstations <- read.csv(\"Divvy_Stations_2013.csv\",header=TRUE,stringsAsFactors=FALSE)\nstations$LATITUDE <- round(stations$latitude,digits=2)\nstations$LONGITUDE <- round(stations$longitude,digits=2)\nnStations <- count(stations,.(LATITUDE,LONGITUDE))\nnStations <- rename(nStations,c(\"freq\"=\"nStations\"))\ncrimes <- read.csv(\"Crimes_-_2013.csv\",header=TRUE,stringsAsFactors=FALSE)\ncolnames(crimes)\ncrimes$LONGITUDE <- round(crimes$Longitude,digits=2)\ncrimes$LATITUDE <- round(crimes$Latitude,digits=2)\nnCrimes <- count(crimes,.(LATITUDE,LONGITUDE))\nnCrimes <- rename(nCrimes,c(\"freq\"=\"nCrimes\"))\n\ndata <- merge(nStations,nCrimes,by=c(\"LATITUDE\",\"LONGITUDE\"),all=TRUE)\ndata <- merge(data,nBLic,by=c(\"LATITUDE\",\"LONGITUDE\"),all=TRUE)\ndata$nStations[is.na(data$nStations)]<-0\ndata$nCrimes[is.na(data$nCrimes)]<-0\ndata[is.na(data)] <- 0\ndata$licFreq[is.na(data$licFreq)] <- 0\n\nlibrary(corrgram)\npng(\"Corrgram.png\",height=20,width=20,res=300,units=\"in\")\ncorrgram(data,lower.panel=panel.pts,upper.panel=panel.pie)\ndev.off()\n",
+    "created" : 1393304354166.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "801633420",
+    "id" : "4271916A",
+    "lastKnownWriteTime" : 1393309168,
+    "path" : "~/_RWork/Divvy/_Script-Correlations.R",
+    "project_path" : "_Script-Correlations.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "source_on_save" : false,
+    "type" : "r_source"
+}

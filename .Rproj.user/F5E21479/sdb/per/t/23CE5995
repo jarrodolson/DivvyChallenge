@@ -1,0 +1,16 @@
+{
+    "contents" : "##For context sized map\nmakeLatLong <- function(dir,fi){\n  require(rgdal)\n  require(sp)\n  layer <- readOGR(dir, layer=fi)\n  layer <- spTransform(layer,CRS(\"+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0\"))\n  return(layer)\n}\n\nlibrary(maptools)\nlibrary(RColorBrewer)\ncity <- makeLatLong(\"City_Boundary\",\"City_Boundary\")\nstationMap <- makeLatLong(\"Divvy_Stations_2013.shp\",\"Divvy_Stations_2013\")\nwards <- makeLatLong(\"Boundaries-Wards\",\"Wards\")\nbikeRt <- makeLatLong(\"Bike_Routes\",\"Bikeroutes3\")\ncops <- makeLatLong(\"Boundaries - Police Beats (current)\",\"geo_aerh-rz74-1\")\nbusinessDist <- makeLatLong(\"Boundaries_-_Central_Business_District\",\"Central_Business_District\")\nmajorSt <- makeLatLong(\"Major_Streets\",\"Major_Streets\")\nneighborhoods <- makeLatLong(\"Neighborhoods_2012\",\"Neighborhoods_2012b\")\nwater <- makeLatLong(\"Waterways\",\"Hydro\")\n\npng(\"MapOfChicagoAndBikes.png\", heigh=20,width=20,res=300,units=\"in\")\nplot(city)\nneighbCols <- brewer.pal(7,\"Set3\")\ndata <- rep(rbind(neighbCols),14)\nplot(neighborhoods, add=TRUE, col=data)\n##plot(businessDist, add=TRUE, col=\"red\")\nplot(water,add=TRUE,col=\"Blue\",border=\"blue\")\nplot(majorSt, add=TRUE)\nplot(bikeRt,add=TRUE,col=\"blue\")\nplot(stationMap, add=TRUE, pch=20)\ntemp <- as.data.frame(coordinates(neighborhoods))\ntemp$names <- neighborhoods$PRI_NEIGH\ntext(temp[,1],y=temp[,2],labels=temp$names,cex=.5)\npoints(refPoints$longitude,y=refPoints$latitude,pch=20,cex=1,col=\"red\")\ntext(refPoints$longitude+.01,y=refPoints$latitude+.005,labels=refPoints$Location,cex=.5)\ndev.off()\n",
+    "created" : 1393196544369.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1335170053",
+    "id" : "23CE5995",
+    "lastKnownWriteTime" : 1393196806,
+    "path" : "~/_RWork/Divvy/_Script-LargeImages.R",
+    "project_path" : "_Script-LargeImages.R",
+    "properties" : {
+    },
+    "source_on_save" : false,
+    "type" : "r_source"
+}

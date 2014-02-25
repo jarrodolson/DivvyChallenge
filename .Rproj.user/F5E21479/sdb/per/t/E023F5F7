@@ -1,0 +1,22 @@
+{
+    "contents" : "",
+    "created" : 1393308033506.000,
+    "dirty" : false,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "E023F5F7",
+    "lastKnownWriteTime" : 7741240722073845761,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "caption" : "bLic",
+        "contentUrl" : "content?title=bLic&file=aaa45590891e4c88bb72e1ad304615ee.htm",
+        "displayedObservations" : 1000,
+        "displayedVariables" : 26,
+        "totalObservations" : 65467,
+        "variables" : 26
+    },
+    "source_on_save" : false,
+    "type" : "r_dataframe"
+}
