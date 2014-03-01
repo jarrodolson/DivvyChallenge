@@ -1,0 +1,17 @@
+{
+    "contents" : "##Preps dataset by pulling data from GiS data\n\nprepDataFromShapes <- function(){\n  library(plyr)\n  ##Data in\n  bLic <- read.csv(\"Business_Licenses_-_Current_Active_-_Map.csv\",header=TRUE,stringsAsFactors=FALSE)\n  bLicKey <- read.csv(\"BusinessLicenseKey.csv\",header=TRUE,stringsAsFactors=FALSE)[c(\"LICENSE.DESCRIPTION\",\"LICENSE.TYPE\")]\n  trips <- read.csv(\"C:\\\\Users\\\\jarrodanderin\\\\Documents\\\\_RWork\\\\_Datasets\\\\Divvy_Stations_Trips_2013\\\\Divvy_Stations_Trips_2013\\\\Divvy_Trips_2013.csv\",header=TRUE,stringsAsFactors=FALSE)\n  stations <- read.csv(\"Divvy_Stations_2013.csv\",header=TRUE,stringsAsFactors=TRUE)\n  crimes <- read.csv(\"Crimes_-_2013.csv\",header=TRUE,stringsAsFactors=FALSE)\n  \n  ##License info\n  bLic <- merge(bLic,bLicKey,by=\"LICENSE.DESCRIPTION\",all.x=TRUE)\n  bLic$LATITUDE <- round(bLic$LATITUDE,digits=2)\n  bLic$LONGITUDE <- round(bLic$LONGITUDE,digits=2)\n  nBLic <- count(bLic,.(LATITUDE,LONGITUDE,LICENSE.TYPE))\n  nBLic <- rename(nBLic, c(\"freq\"=\"licFreq\"))\n  nBLic <- reshape(nBLic,idvar=c(\"LATITUDE\",\"LONGITUDE\"),timevar=\"LICENSE.TYPE\",direction=\"wide\")\n  \n  ##Stations data\n  stations$LATITUDE <- round(stations$latitude,digits=2)\n  stations$LONGITUDE <- round(stations$longitude,digits=2)\n  nStations <- count(stations,.(LATITUDE,LONGITUDE))\n  nStations <- rename(nStations,c(\"freq\"=\"nStations\"))\n  \n  ##NTrips\n  nTrips_in <- count(trips,.(to_station_id))\n  nTrips_in <- merge(nTrips_in,stations,by.x=\"to_station_id\",by.y=\"id\",all.x=TRUE)\n  nTrips_in <- nTrips_in[c(\"LATITUDE\",\"LONGITUDE\",\"freq\")]\n  colnames(nTrips_in) <- c(\"LATITUDE\",\"LONGITUDE\",\"nTripsIn\")\n  nTrips_out <- count(trips,.(from_station_id))\n  nTrips_out <- merge(nTrips_out,stations,by.x=\"from_station_id\",by.y=\"id\",all.x=TRUE)\n  nTrips_out <- nTrips_out[c(\"LATITUDE\",\"LONGITUDE\",\"freq\")]\n  colnames(nTrips_out) <- c(\"LATITUDE\",\"LONGITUDE\",\"nTripsOut\")\n  \n  ##NCrimes\n  crimes$LONGITUDE <- round(crimes$Longitude,digits=2)\n  crimes$LATITUDE <- round(crimes$Latitude,digits=2)\n  nCrimes <- count(crimes,.(LATITUDE,LONGITUDE))\n  nCrimes <- rename(nCrimes,c(\"freq\"=\"nCrimes\"))\n  \n  ##Put data together\n  data <- merge(nStations,nCrimes,by=c(\"LATITUDE\",\"LONGITUDE\"),all=TRUE)\n  data <- merge(data,nTrips_in,by=c(\"LATITUDE\",\"LONGITUDE\"),all=TRUE)\n  data <- merge(data,nTrips_out,by=c(\"LATITUDE\",\"LONGITUDE\"),all=TRUE)\n  data$nTotalTrips <- data$nTripsIn+data$nTripsOut\n  data <- merge(data,nBLic,by=c(\"LATITUDE\",\"LONGITUDE\"),all=TRUE)\n  write.csv(data,\"ShapeFileData.csv\",row.names=FALSE)\n  return(data)\n}\n",
+    "created" : 1393704947056.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "868335623",
+    "id" : "B829C172",
+    "lastKnownWriteTime" : 1393705230,
+    "path" : "~/_RWork/Divvy/_Script-PrepDataFromShapes.R",
+    "project_path" : "_Script-PrepDataFromShapes.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "source_on_save" : true,
+    "type" : "r_source"
+}
