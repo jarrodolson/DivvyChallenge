@@ -234,7 +234,7 @@ end.rcode-->
 
 <p>Map Showing Bike Routes and Divvy Stations:</p>
 
-<!--begin.rcode fig.width=10, fig.height=10
+<!--begin.rcode fig.width=10, fig.height=14.91
 plot(city,xlim=c(-87.70786,-87.58071),ylim=c(41.78875,41.97835))
 ##plot(wards,add=TRUE)
 plot(bikeRt,add=TRUE)
@@ -245,7 +245,7 @@ text(refPoints$longitude+.01,y=refPoints$latitude+.005,labels=refPoints$Location
 end.rcode-->
 
 <p>Map showing ward and Divvy Stations:</p>
-<!--begin.rcode fig.width=10, fig.height=10
+<!--begin.rcode fig.width=10, fig.height=14.91
 plot(city,xlim=c(-87.70786,-87.58071),ylim=c(41.78875,41.97835))
 plot(wards,add=TRUE)
 plot(stationMap,add=TRUE,pch=20)
@@ -255,7 +255,7 @@ text(refPoints$longitude+.01,y=refPoints$latitude+.005,labels=refPoints$Location
 end.rcode-->
 
 <p>Map showing police and Divvy Stations:</p>
-<!--begin.rcode fig.width=10, fig.height=10
+<!--begin.rcode fig.width=10, fig.height=14.91
 plot(city,xlim=c(-87.70786,-87.58071),ylim=c(41.78875,41.97835))
 plot(cops,add=TRUE)
 plot(stationMap,add=TRUE,pch=20)
@@ -265,7 +265,7 @@ text(refPoints$longitude+.01,y=refPoints$latitude+.005,labels=refPoints$Location
 end.rcode-->
 
 <p>Map showing business district and Divvy Stations:</p>
-<!--begin.rcode fig.width=10, fig.height=10
+<!--begin.rcode fig.width=10, fig.height=14.91
 plot(city,xlim=c(-87.70786,-87.58071),ylim=c(41.78875,41.97835))
 plot(neighborhoods,add=TRUE,col=neighbCols)
 plot(businessDist,add=TRUE)
@@ -277,7 +277,7 @@ end.rcode-->
 
 
 <p>Map showing neighborhoods, normalized pickups by Divvy Stations:</p>
-<!--begin.rcode fig.width=10, fig.height=10
+<!--begin.rcode fig.width=14.91, fig.height=10
 plot(city,xlim=c(-87.70786,-87.58071),ylim=c(41.78875,41.97835))
 plot(neighborhoods,add=TRUE,col=neighbCols)
 plot(water,add=TRUE,col="Blue",border="blue")
@@ -287,7 +287,7 @@ text(refPoints$longitude+.01,y=refPoints$latitude+.005,labels=refPoints$Location
 end.rcode-->
 
 <p>Here we look at the total number of looped trips
-<!--begin.rcode fig.height=10,fig.width=10
+<!--begin.rcode fig.height=14.91,fig.width=10
 
 plot(city,xlim=c(-87.70786,-87.58071),ylim=c(41.78875,41.97835))
 plot(neighborhoods,add=TRUE,col=neighbCols)
@@ -298,7 +298,7 @@ text(refPoints$longitude+.01,y=refPoints$latitude+.005,labels=refPoints$Location
 end.rcode-->
 
 <p>Here we look at the total percentage of looped trips</p>
-<!--begin.rcode fig.height=10,fig.width=10
+<!--begin.rcode fig.height=14.91,fig.width=10
 plot(city,xlim=c(-87.70786,-87.58071),ylim=c(41.78875,41.97835))
 plot(neighborhoods,add=TRUE,col=neighbCols)
 points(loopCount2Wide$longitude,loopCount2Wide$latitude,pch=20,cex=(loopCount2Wide$stationProbLoop/100)*10)
@@ -308,7 +308,7 @@ end.rcode-->
 <p>Interesting insight - While they may not represent the most trips, the highest percentage of looped trips are the bike stations on the periphery, suggesting that people are just getting the bike for a trip away from other Divvy stations and then bringing it back.</p>
 
 <p>Let's take a look at the highest velocity stations</p>
-<!--begin.rcode fig.height=10, fig.width=10
+<!--begin.rcode fig.height=14.91, fig.width=10
 plot(city,xlim=c(-87.70786,-87.58071),ylim=c(41.78875,41.97835))
 plot(neighborhoods,add=TRUE,col=neighbCols)
 plot(water,add=TRUE,col="Blue",border="blue")
